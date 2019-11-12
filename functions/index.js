@@ -31,16 +31,16 @@ app.get('/', (req, res) => {
     })
     // [END index]
 
-app.post("/setPost", async(req, res) => {
-    //   var userId = req.user.uid
+app.post("/setPost", validateFirebaseIdToken(), async(req, res) => {
+    var userId = req.user.uid
     console.log("body " + req.body + " " + req.user)
     var cityName = req.body.cityName
     var date = req.body.date
     var desc = req.body.desc
     var imageUrl = req.body.imageUrl
     var postId = req.body.postId
-    await insertPost(cityName, date, desc, imageUrl, 0, 0, "userId", postId)
-    console.log("send final")
+    await insertPost(cityName, date, desc, imageUrl, 0, 0, userId, postId)
+        //console.log("send final")
     return res.status(200).send({ "message": "post added" })
 })
 
@@ -64,14 +64,15 @@ function validateFirebaseIdToken() {
             // Read the ID Token from the Authorization header.
             idToken = req.headers.authorization.split('Bearer ')[1]
         } else if (req.cookies) {
+            //console.log('Found "__session" cookie');
             // Read the ID Token from cookie.
-            idToken = req.cookies.__session
+            idToken = req.cookies.__session;
         } else {
             // No cookie
             res.status(403).send('Unauthorized')
             return
         }
-        admin.auth().verifyIdToken(idToken).then((decodedIdToken) => {
+        admin.auth().verifyIdToken(req.headers.authorization.split('Bearer ')[1]).then((decodedIdToken) => {
             //   //console.log()
             req.user = decodedIdToken
             return next()
