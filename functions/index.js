@@ -44,6 +44,16 @@ app.post("/setPost", validateFirebaseIdToken(), async(req, res) => {
     return res.status(200).send({ "message": "post added" })
 })
 
+app.post("/setUser", validateFirebaseIdToken(), async(req, res) => {
+    var userId = req.user.uid
+    var name = req.body.name
+    var dp = req.body.dp
+    var email = req.body.email
+
+    await insertUser(name, dp, email, userId)
+    return res.status(200).send("user added")
+})
+
 function validateFirebaseIdToken() {
     return function(req, res, next) {
         // console.log('Check if request is authorized with Firebase ID token')
@@ -94,6 +104,15 @@ async function insertPost(cityName, date, desc, imageUrl, like, unlike, creatorI
         "like": 0,
         "unlike": 0,
         "creatorId": creatorId
+    })
+}
+
+async function insertUser(name, dp, email, userId) {
+    var ref = admin.database().ref("Userdetail").child(userId)
+    return ref.set({
+        "name": name,
+        "dp": dp,
+        "email": email
     })
 }
 
