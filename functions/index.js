@@ -34,12 +34,11 @@ app.get('/', (req, res) => {
 app.post("/setPost", validateFirebaseIdToken(), async(req, res) => {
     var userId = req.user.uid
     console.log("body " + req.body + " " + req.user)
-    var cityName = req.body.cityName
     var date = req.body.date
     var desc = req.body.desc
     var imageUrl = req.body.imageUrl
     var postId = req.body.postId
-    await insertPost(cityName, date, desc, imageUrl, 0, 0, userId, postId)
+    await insertPost(date, desc, imageUrl, 0, 0, userId, postId)
         //console.log("send final")
     return res.status(200).send({ "message": "post added" })
 })
@@ -51,7 +50,12 @@ app.post("/setUser", validateFirebaseIdToken(), async(req, res) => {
     var email = req.body.email
 
     await insertUser(name, dp, email, userId)
-    return res.status(200).send("user added")
+    return res.status(200).send(JSON.stringify({ "message": "user added" }))
+})
+
+app.post("/getPosts", validateFirebaseIdToken(), async(req, res) => {
+    var startAt = req.body.nextKey
+
 })
 
 function validateFirebaseIdToken() {
@@ -82,7 +86,7 @@ function validateFirebaseIdToken() {
             res.status(403).send('Unauthorized')
             return
         }
-        admin.auth().verifyIdToken(req.headers.authorization.split('Bearer ')[1]).then((decodedIdToken) => {
+        admin.auth().verifyIdToken(idToken).then((decodedIdToken) => {
             //   //console.log()
             req.user = decodedIdToken
             return next()
@@ -93,11 +97,10 @@ function validateFirebaseIdToken() {
     }
 }
 
-async function insertPost(cityName, date, desc, imageUrl, like, unlike, creatorId, postId) {
+async function insertPost(date, desc, imageUrl, like, unlike, creatorId, postId) {
     console.log("insert " + postId)
     var ref = admin.database().ref("BlogPosts").child(postId)
     return ref.set({
-        "cityName": cityName,
         "date": date,
         "desc": desc,
         "imageUrl": imageUrl,
@@ -114,6 +117,11 @@ async function insertUser(name, dp, email, userId) {
         "dp": dp,
         "email": email
     })
+}
+
+async function getBlogPosts(nextKey) {
+    const snapShotBlog = await admin.database.ref("BlogPosts").orderBy('date').startAt(startAt).once('value')
+
 }
 
 // [START seconds_left]
