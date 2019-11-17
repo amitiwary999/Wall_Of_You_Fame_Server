@@ -1,3 +1,4 @@
+/* eslint-disable promise/no-nesting */
 'use strict'
 
 // [START import]
@@ -5,6 +6,7 @@ const functions = require('firebase-functions')
 const express = require('express')
 var bodyParser = require('body-parser')
 var admin = require('firebase-admin')
+const mysql = require('mysql');
 const app = express()
     // [END import]
 
@@ -16,11 +18,74 @@ app.use(bodyParser.json({ limit: '50mb' }))
 var serviceAccount = require('./tele-a36a5-firebase-adminsdk-q3zzt-8245e30711.json')
 var databaseURL = 'https://tele-a36a5.firebaseio.com/'
 admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-        databaseURL: databaseURL
-    })
-    // [START index]
-    // This endpoint provides displays the index page.
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL: databaseURL
+})
+
+const connection = mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: 'MeeerAAmiT',
+    database: 'wallfamedb'
+});
+
+async function runQuery(pool, sqlQuery) {
+    return pool.getConnection()
+        .then(connection => {
+            return connection.beginTransaction()
+                .then(() => {
+                    return connection.query(sqlQuery)
+                        .then(results => {
+                            return connection.commit()
+                                .then(() => {
+                                    connection.release();
+                                    return results;
+                                })
+                                .catch(_error => {
+                                    connection.release();
+                                    return results;
+                                })
+                        })
+                        .catch(error => {
+                            console.error("not able to run query", error);
+                            console.error("query not able to run query is ", sqlQuery);
+                            // eslint-disable-next-line promise/no-nesting
+                            connection.rollback()
+                                .then(() => {
+                                    connection.release();
+                                    return null;
+                                })
+                                .catch(error => {
+                                    console.error("not able to rollback", error);
+                                    connection.release();
+                                    return null;
+                                })
+                        })
+                })
+                .catch(error => {
+                    console.error("not able to begin transaction", error);
+                    console.error("query not able to begin transaction is ", sqlQuery);
+                    connection.rollback()
+                        .then(() => {
+                            connection.release();
+                            return null;
+                        })
+                        .catch(error => {
+                            console.error("not able to rollback", error);
+                            connection.release();
+                            return null;
+                        })
+                })
+        })
+        .catch(error => {
+            console.error("not able to get connection", error);
+            console.error("query not able to get connection is ", sqlQuery);
+            return null
+        })
+}
+
+// [START index]
+// This endpoint provides displays the index page.
 app.get('/', (req, res) => {
         const date = new Date()
         const hours = (date.getHours() % 12) + 1; // London is UTC + 1hr
@@ -40,7 +105,7 @@ app.post("/setPost", validateFirebaseIdToken(), async(req, res) => {
     var postId = req.body.postId
     await insertPost(date, desc, imageUrl, 0, 0, userId, postId)
         //console.log("send final")
-    return res.status(200).send({ "message": "post added" })
+    return res.status(200).send(JSON.stringify({ "message": "post added" }))
 })
 
 app.post("/setUser", validateFirebaseIdToken(), async(req, res) => {
@@ -53,9 +118,11 @@ app.post("/setUser", validateFirebaseIdToken(), async(req, res) => {
     return res.status(200).send(JSON.stringify({ "message": "user added" }))
 })
 
-app.post("/getPosts", validateFirebaseIdToken(), async(req, res) => {
+app.get("/getPosts", validateFirebaseIdToken(), async(req, res) => {
     var startAt = req.body.nextKey
-
+    var limit = req.body.limit
+    let resultJson = await getBlogPosts(startAt, limit)
+    res.status(200).send(resultJson)
 })
 
 function validateFirebaseIdToken() {
@@ -119,9 +186,30 @@ async function insertUser(name, dp, email, userId) {
     })
 }
 
-async function getBlogPosts(nextKey) {
-    const snapShotBlog = await admin.database.ref("BlogPosts").orderBy('date').startAt(startAt).once('value')
+async function getBlogPosts(nextKey, limit) {
+    let snapShotBlog
+    let query
+    let res = []
+    if (nextKey === "") {
+        query = admin.database().ref("BlogPosts").orderByKey().limitToLast(limit);
+    } else {
+        query = admin.database().ref("BlogPosts").orderByKey().startAt(nextKey).limitToLast(limit);
+    }
+    snapShotBlog = await query.once('value')
+    snapShotBlog.forEach((snapShot) => {
+        let key = snapShot.key
+        let date = snapShot.val().date
+        let desc = snapShot.val().desc
+        let imageUrl = snapShot.val().imageUrl
+        let like = snapShot.val().like
+        let unlike = snapShot.val().unlike
+        let creatorId = snapShot.val().creatorId
 
+        let data = { "date": date, "desc": desc, "imageUrl": imageUrl, "like": like, "unlike": unlike, "creatorId": creatorId, "postId": key };
+        res.push(data);
+    })
+
+    return res;
 }
 
 // [START seconds_left]
