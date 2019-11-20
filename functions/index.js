@@ -6,7 +6,7 @@ const functions = require('firebase-functions')
 const express = require('express')
 var bodyParser = require('body-parser')
 var admin = require('firebase-admin')
-const mysql = require('mysql');
+const mysql = require('promise-mysql');
 const app = express()
     // [END import]
 
@@ -22,15 +22,25 @@ admin.initializeApp({
     databaseURL: databaseURL
 })
 
-const connection = mysql.createConnection({
+const connections = mysql.createConnection({
     host: 'localhost',
     user: 'root',
     password: 'MeeerAAmiT',
     database: 'wallfamedb'
 });
 
+const pool = mysql.createPool({
+    host: 'localhost',
+    user: 'root',
+    password: 'passalpha',
+    connectionLimit: 5,
+    database: 'wallfamedb'
+})
+
 async function runQuery(pool, sqlQuery) {
-    return pool.getConnection()
+    return pool.then(p => {
+            return p.getConnection();
+        })
         .then(connection => {
             return connection.beginTransaction()
                 .then(() => {
@@ -123,6 +133,21 @@ app.get("/getPosts", validateFirebaseIdToken(), async(req, res) => {
     var limit = req.body.limit
     let resultJson = await getBlogPosts(startAt, limit)
     res.status(200).send(resultJson)
+})
+
+app.post("/setPostSql", async(req, res) => {
+    let postId = req.body.postId;
+    let desc = req.body.desc;
+    let date = req.body.date;
+    let imageUrl = req.body.imageUrl;
+    let creatorId = req.body.creatorId;
+    let like = req.body.like;
+    let unlike = req.body.unlike;
+
+    let sql = "INSERT INTO wallfame_post_table (postId, date, imageUrl, creatorId, like, unlike) VALUES (\"" + postId + "\",\"" + date + "\",\"" + imageUrl + "\",\"" + creatorId + "\",0,0);";
+    let result = await runQuery(pool, sql);
+    console.log("sql result " + result);
+    res.status(200).send(JSON.stringify({ "message": "post added" }))
 })
 
 function validateFirebaseIdToken() {
