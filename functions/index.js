@@ -22,13 +22,6 @@ admin.initializeApp({
     databaseURL: databaseURL
 })
 
-const connections = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'MeeerAAmiT',
-    database: 'wallfamedb'
-});
-
 const pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
@@ -141,14 +134,28 @@ app.post("/setPostSql", async(req, res) => {
     let date = req.body.date;
     let imageUrl = req.body.imageUrl;
     let creatorId = req.body.creatorId;
-    let like = req.body.like;
-    let unlike = req.body.unlike;
+    let like = 0;
+    let unlike = 0;
 
     //let sql = "INSERT INTO wallfame_blog_table (postId, desc, date, imageUrl, creatorId) VALUES (\"" + postId + "\",\"" + date + "\",\"" + imageUrl + "\",\"" + creatorId + "\",\"" + desc + "\");";
     let s = "INSERT INTO wallfame_post_table (postId, date, description, imageUrl, creatorId, likeNo, unlike) VALUES (\"" + postId + "\", \"" + date + "\", \"" + desc + "\", \"" + imageUrl + "\", \"" + creatorId + "\", " + like + ", " + unlike + ");";
     let result = await runQuery(pool, s);
     console.log("sql result " + result);
     res.status(200).send(JSON.stringify({ "message": "post added" }))
+})
+
+app.get("/getBlogSql", async(req, res) => {
+    let postId = req.body.postId
+    let limit = req.body.limit
+    let sql = ""
+    if (postId === "") {
+        sql = "SELECT * FROM wallfame_post_table ORDER BY postId DESC limit " + limit + ";";
+    } else {
+        sql = "SELECT * FROM wallfame_post_table WHERE postId < " + postId + " ORDER BY postId DESC limit " + limit + ";";
+    }
+
+    let result = await runQuery(pool, sql);
+    res.status(200).send(JSON.stringify(result))
 })
 
 function validateFirebaseIdToken() {
