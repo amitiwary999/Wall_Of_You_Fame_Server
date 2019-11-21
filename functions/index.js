@@ -144,8 +144,9 @@ app.post("/setPostSql", async(req, res) => {
     let like = req.body.like;
     let unlike = req.body.unlike;
 
-    let sql = "INSERT INTO wallfame_post_table (postId, date, imageUrl, creatorId, like, unlike) VALUES (\"" + postId + "\",\"" + date + "\",\"" + imageUrl + "\",\"" + creatorId + "\",0,0);";
-    let result = await runQuery(pool, sql);
+    //let sql = "INSERT INTO wallfame_blog_table (postId, desc, date, imageUrl, creatorId) VALUES (\"" + postId + "\",\"" + date + "\",\"" + imageUrl + "\",\"" + creatorId + "\",\"" + desc + "\");";
+    let s = "INSERT INTO wallfame_post_table (postId, date, description, imageUrl, creatorId, likeNo, unlike) VALUES (\"" + postId + "\", \"" + date + "\", \"" + desc + "\", \"" + imageUrl + "\", \"" + creatorId + "\", " + like + ", " + unlike + ");";
+    let result = await runQuery(pool, s);
     console.log("sql result " + result);
     res.status(200).send(JSON.stringify({ "message": "post added" }))
 })
