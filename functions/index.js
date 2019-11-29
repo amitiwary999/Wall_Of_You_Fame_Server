@@ -106,7 +106,9 @@ app.post("/setPost", validateFirebaseIdToken(), async(req, res) => {
     var desc = req.body.desc
     var imageUrl = req.body.imageUrl
     var postId = req.body.postId
-    await insertPost(date, desc, imageUrl, 0, 0, userId, postId)
+    var name = req.body.name
+    var dp = req.body.dp
+    await insertPost(date, desc, imageUrl, userId, postId, name, dp)
         //console.log("send final")
     return res.status(200).send(JSON.stringify({ "message": "post added" }))
 })
@@ -197,7 +199,7 @@ function validateFirebaseIdToken() {
     }
 }
 
-async function insertPost(date, desc, imageUrl, like, unlike, creatorId, postId) {
+async function insertPost(date, desc, imageUrl, creatorId, postId, creatorName, creatorDp) {
     console.log("insert " + postId)
     var ref = admin.database().ref("BlogPosts").child(postId)
     return ref.set({
@@ -206,7 +208,9 @@ async function insertPost(date, desc, imageUrl, like, unlike, creatorId, postId)
         "imageUrl": imageUrl,
         "like": 0,
         "unlike": 0,
-        "creatorId": creatorId
+        "creatorId": creatorId,
+        "creatorName": creatorName,
+        "creatorDp": creatorDp
     })
 }
 
@@ -237,8 +241,10 @@ async function getBlogPosts(nextKey, limit) {
         let like = snapShot.val().like
         let unlike = snapShot.val().unlike
         let creatorId = snapShot.val().creatorId
+        let creatorName = snapShot.val().creatorName
+        let creatorDp = snapShot.val().creatorDp
 
-        let data = { "date": date, "desc": desc, "imageUrl": imageUrl, "like": like, "unlike": unlike, "creatorId": creatorId, "postId": key };
+        let data = { "date": date, "desc": desc, "imageUrl": imageUrl, "like": like, "unlike": unlike, "creatorId": creatorId, "postId": key, "creatorName": creatorName, "creatorDp": creatorDp };
         res.push(data);
     })
 
