@@ -123,7 +123,7 @@ app.post("/setUser", validateFirebaseIdToken(), async(req, res) => {
     return res.status(200).send(JSON.stringify({ "message": "user added" }))
 })
 
-app.get("/getPosts", validateFirebaseIdToken(), async(req, res) => {
+app.post("/getPosts", validateFirebaseIdToken(), async(req, res) => {
     var startAt = req.body.nextKey
     var limit = req.body.limit
     let resultJson = await getBlogPosts(startAt, limit)
@@ -146,7 +146,7 @@ app.post("/setPostSql", async(req, res) => {
     res.status(200).send(JSON.stringify({ "message": "post added" }))
 })
 
-app.get("/getBlogSql", async(req, res) => {
+app.post("/getBlogSql", async(req, res) => {
     let postId = req.body.postId
     let limit = req.body.limit
     let sql = ""
@@ -235,17 +235,19 @@ async function getBlogPosts(nextKey, limit) {
     snapShotBlog = await query.once('value')
     snapShotBlog.forEach((snapShot) => {
         let key = snapShot.key
-        let date = snapShot.val().date
-        let desc = snapShot.val().desc
-        let imageUrl = snapShot.val().imageUrl
-        let like = snapShot.val().like
-        let unlike = snapShot.val().unlike
-        let creatorId = snapShot.val().creatorId
-        let creatorName = snapShot.val().creatorName
-        let creatorDp = snapShot.val().creatorDp
+        if (key !== nextKey) {
+            let date = snapShot.val().date
+            let desc = snapShot.val().desc
+            let imageUrl = snapShot.val().imageUrl
+            let like = snapShot.val().like
+            let unlike = snapShot.val().unlike
+            let creatorId = snapShot.val().creatorId
+            let creatorName = snapShot.val().creatorName
+            let creatorDp = snapShot.val().creatorDp
 
-        let data = { "date": date, "desc": desc, "imageUrl": imageUrl, "like": like, "unlike": unlike, "creatorId": creatorId, "postId": key, "creatorName": creatorName, "creatorDp": creatorDp };
-        res.push(data);
+            let data = { "date": date, "desc": desc, "imageUrl": imageUrl, "like": like, "unlike": unlike, "creatorId": creatorId, "postId": key, "creatorName": creatorName, "creatorDp": creatorDp };
+            res.push(data);
+        }
     })
 
     return res;
