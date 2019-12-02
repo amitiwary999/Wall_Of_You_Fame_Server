@@ -130,6 +130,14 @@ app.post("/getPosts", validateFirebaseIdToken(), async(req, res) => {
     res.status(200).send(resultJson)
 })
 
+app.post("/postLike", validateFirebaseIdToken(), async(req, res) => {
+    let postId = req.body.postId;
+    let incr = req.body.increment
+    let result = await updateLike(postId, incr)
+    console.log("post like result " + result);
+    res.status(200).send("success")
+})
+
 app.post("/setPostSql", async(req, res) => {
     let postId = req.body.postId;
     let desc = req.body.desc;
@@ -251,6 +259,20 @@ async function getBlogPosts(nextKey, limit) {
     })
 
     return res;
+}
+
+async function updateLike(postId, incr) {
+    let query = admin.database().ref("BlogPosts").child(postId);
+    let snapShotBlog = await query.once('value');
+    let like = snapShotBlog.val().like;
+    if (incr === 1) {
+        like = like + 1;
+    } else {
+        like = like - 1;
+    }
+    return query.update({
+        "like": like + 1
+    });
 }
 
 // [START seconds_left]
