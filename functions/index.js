@@ -271,7 +271,7 @@ async function updateLike(postId, incr) {
         like = like - 1;
     }
     return query.update({
-        "like": like + 1
+        "like": like
     });
 }
 
