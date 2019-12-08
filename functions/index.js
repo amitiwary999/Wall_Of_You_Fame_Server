@@ -102,7 +102,7 @@ app.get('/', (req, res) => {
 app.post("/setPost", validateFirebaseIdToken(), async(req, res) => {
     var userId = req.user.uid
     console.log("body " + req.body + " " + req.user)
-    var date = req.body.date
+    var date = Date.now();
     var desc = req.body.desc
     var imageUrl = req.body.imageUrl
     var postId = req.body.postId
@@ -126,14 +126,16 @@ app.post("/setUser", validateFirebaseIdToken(), async(req, res) => {
 app.post("/getPosts", validateFirebaseIdToken(), async(req, res) => {
     var startAt = req.body.nextKey
     var limit = req.body.limit
-    let resultJson = await getBlogPosts(startAt, limit)
+    var userId = req.user.uid;
+    let resultJson = await getBlogPosts(startAt, limit, userId)
     res.status(200).send(resultJson)
 })
 
 app.post("/postLike", validateFirebaseIdToken(), async(req, res) => {
     let postId = req.body.postId;
-    let incr = req.body.increment
-    let result = await updateLike(postId, incr)
+    let incr = req.body.increment;
+    let userId = req.user.uid;
+    let result = await updateLike(postId, incr, userId)
     console.log("post like result " + result);
     res.status(200).send("success")
 })
@@ -214,8 +216,6 @@ async function insertPost(date, desc, imageUrl, creatorId, postId, creatorName, 
         "date": date,
         "desc": desc,
         "imageUrl": imageUrl,
-        "like": 0,
-        "unlike": 0,
         "creatorId": creatorId,
         "creatorName": creatorName,
         "creatorDp": creatorDp
@@ -231,7 +231,7 @@ async function insertUser(name, dp, email, userId) {
     })
 }
 
-async function getBlogPosts(nextKey, limit) {
+async function getBlogPosts(nextKey, limit, userId) {
     let snapShotBlog
     let query
     let res = []
@@ -247,13 +247,26 @@ async function getBlogPosts(nextKey, limit) {
             let date = snapShot.val().date
             let desc = snapShot.val().desc
             let imageUrl = snapShot.val().imageUrl
-            let like = snapShot.val().like
-            let unlike = snapShot.val().unlike
+                // let like = snapShot.val().like
+                // let unlike = snapShot.val().unlike
             let creatorId = snapShot.val().creatorId
             let creatorName = snapShot.val().creatorName
             let creatorDp = snapShot.val().creatorDp
-
-            let data = { "date": date, "desc": desc, "imageUrl": imageUrl, "like": like, "unlike": unlike, "creatorId": creatorId, "postId": key, "creatorName": creatorName, "creatorDp": creatorDp };
+            let likesBy = snapShot.val().like
+            let like = 0
+            let isLiked = 0
+            if (likesBy !== null && likesBy !== undefined) {
+                const map = new Map(Object.entries(likesBy));
+                //console.log("likes " + likesBy + " " + likesBy.size + " " + map.size);
+                //console.log("aa " + map.get(userId));
+                like = map.size
+                isLiked = 0
+                if (map.get(userId) !== null) {
+                    isLiked = 1
+                }
+            }
+            let data = { "date": date, "desc": desc, "imageUrl": imageUrl, "like": like, "creatorId": creatorId, "postId": key, "creatorName": creatorName, "creatorDp": creatorDp, "isLiked": isLiked };
+            //let data = { "date": date, "desc": desc, "imageUrl": imageUrl, "like": like, "unlike": unlike, "creatorId": creatorId, "postId": key, "creatorName": creatorName, "creatorDp": creatorDp };
             res.push(data);
         }
     })
@@ -261,18 +274,17 @@ async function getBlogPosts(nextKey, limit) {
     return res;
 }
 
-async function updateLike(postId, incr) {
-    let query = admin.database().ref("BlogPosts").child(postId);
-    let snapShotBlog = await query.once('value');
-    let like = snapShotBlog.val().like;
+async function updateLike(postId, incr, userId) {
+    let ref = admin.database().ref("BlogPosts").child(postId).child("like");
     if (incr === 1) {
-        like = like + 1;
+        return ref.set({
+            [userId]: 1
+        });
     } else {
-        like = like - 1;
+        return ref.set({
+            [userId]: null
+        });
     }
-    return query.update({
-        "like": like
-    });
 }
 
 // [START seconds_left]
