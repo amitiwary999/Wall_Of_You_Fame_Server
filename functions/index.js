@@ -238,7 +238,7 @@ async function getBlogPosts(nextKey, limit, userId) {
     if (nextKey === "") {
         query = admin.database().ref("BlogPosts").orderByKey().limitToLast(limit);
     } else {
-        query = admin.database().ref("BlogPosts").orderByKey().startAt(nextKey).limitToLast(limit);
+        query = admin.database().ref("BlogPosts").orderByKey().endAt(nextKey).limitToLast(limit);
     }
     snapShotBlog = await query.once('value')
     snapShotBlog.forEach((snapShot) => {
@@ -267,7 +267,7 @@ async function getBlogPosts(nextKey, limit, userId) {
             }
             let data = { "date": date, "desc": desc, "imageUrl": imageUrl, "like": like, "creatorId": creatorId, "postId": key, "creatorName": creatorName, "creatorDp": creatorDp, "isLiked": isLiked };
             //let data = { "date": date, "desc": desc, "imageUrl": imageUrl, "like": like, "unlike": unlike, "creatorId": creatorId, "postId": key, "creatorName": creatorName, "creatorDp": creatorDp };
-            res.push(data);
+            res.unshift(data);
         }
     })
 
