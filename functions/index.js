@@ -126,6 +126,20 @@ app.post("/setUser", validateFirebaseIdToken(), async(req, res) => {
     return res.status(200).send(JSON.stringify({ "message": "user added" }))
 })
 
+app.post("/setUserSql", validateFirebaseIdToken(), async(req, res) => {
+    let userId = req.user.uid
+    let name = req.body.name
+    let dp = req.body.dp
+    let email = req.body.email
+
+    let result = await insertUserSql(name, dp, email, userId)
+    if (result !== null && result !== undefined) {
+        return res.status(200).send(JSON.stringify({ "message": "user added" }))
+    } else {
+        return res.status(500).send("user profile not created")
+    }
+})
+
 app.post("/getPosts", validateFirebaseIdToken(), async(req, res) => {
     var startAt = req.body.nextKey
     var limit = req.body.limit
@@ -235,6 +249,12 @@ async function insertUser(name, dp, email, userId) {
         "dp": dp,
         "email": email
     })
+}
+
+async function insertUserSql(userName, userDp, userEmail, userId) {
+    let s = "INSERT INTO wallfame_user_table (userId, userName, userDp, userEmail) VALUES (\"" + userId + "\", \"" + userName + "\", \"" + userDp + "\", \"" + userEmail + "\");";
+    let result = await runQuery(pool, s);
+    return result
 }
 
 async function getBlogPosts(nextKey, limit, userId) {
