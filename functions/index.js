@@ -108,7 +108,8 @@ app.post("/setPost", validateFirebaseIdToken(), async(req, res) => {
     var postId = req.body.postId
     var name = req.body.name
     var dp = req.body.dp
-    await insertPost(date, desc, imageUrl, userId, postId, name, dp)
+    var mimeType = req.body.mimeType
+    await insertPost(date, desc, imageUrl, userId, postId, name, dp, mimeType)
         //console.log("send final")
     return res.status(200).send(JSON.stringify({ "message": "post added" }))
 })
@@ -209,7 +210,7 @@ function validateFirebaseIdToken() {
     }
 }
 
-async function insertPost(date, desc, imageUrl, creatorId, postId, creatorName, creatorDp) {
+async function insertPost(date, desc, imageUrl, creatorId, postId, creatorName, creatorDp, mimeType) {
     console.log("insert " + postId)
     var ref = admin.database().ref("BlogPosts").child(postId)
     return ref.set({
@@ -218,7 +219,8 @@ async function insertPost(date, desc, imageUrl, creatorId, postId, creatorName, 
         "imageUrl": imageUrl,
         "creatorId": creatorId,
         "creatorName": creatorName,
-        "creatorDp": creatorDp
+        "creatorDp": creatorDp,
+        "mimeType": mimeType
     })
 }
 
@@ -252,6 +254,7 @@ async function getBlogPosts(nextKey, limit, userId) {
             let creatorId = snapShot.val().creatorId
             let creatorName = snapShot.val().creatorName
             let creatorDp = snapShot.val().creatorDp
+            let mimeType = snapShot.val().mimeType
             let likesBy = snapShot.val().like
             let like = 0
             let isLiked = 0
@@ -265,7 +268,7 @@ async function getBlogPosts(nextKey, limit, userId) {
                     isLiked = 1
                 }
             }
-            let data = { "date": date, "desc": desc, "imageUrl": imageUrl, "like": like, "creatorId": creatorId, "postId": key, "creatorName": creatorName, "creatorDp": creatorDp, "isLiked": isLiked };
+            let data = { "date": date, "desc": desc, "imageUrl": imageUrl, "like": like, "creatorId": creatorId, "postId": key, "creatorName": creatorName, "creatorDp": creatorDp, "isLiked": isLiked, "mimeType": mimeType };
             //let data = { "date": date, "desc": desc, "imageUrl": imageUrl, "like": like, "unlike": unlike, "creatorId": creatorId, "postId": key, "creatorName": creatorName, "creatorDp": creatorDp };
             res.unshift(data);
         }
