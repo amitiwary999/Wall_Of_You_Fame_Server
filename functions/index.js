@@ -7,6 +7,7 @@ const express = require('express')
 var bodyParser = require('body-parser')
 var admin = require('firebase-admin')
 const mysql = require('promise-mysql');
+require('dotenv').config()
 const app = express()
     // [END import]
 
@@ -23,11 +24,12 @@ admin.initializeApp({
 })
 
 const pool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: 'passalpha',
+    host: process.env.host,
+    user: process.env.user,
+    password: process.env.password,
     connectionLimit: 5,
-    database: 'wallfamedb'
+    database: process.env.database,
+    port: process.env.port
 })
 
 async function runQuery(pool, sqlQuery) {
@@ -141,17 +143,19 @@ app.post("/postLike", validateFirebaseIdToken(), async(req, res) => {
     res.status(200).send("success")
 })
 
-app.post("/setPostSql", async(req, res) => {
-    let postId = req.body.postId;
-    let desc = req.body.desc;
-    let date = req.body.date;
-    let imageUrl = req.body.imageUrl;
-    let creatorId = req.body.creatorId;
-    let like = 0;
-    let unlike = 0;
+app.post("/setPostSql", validateFirebaseIdToken(), async(req, res) => {
+    var userId = req.user.uid
+    console.log("body " + req.body + " " + req.user)
+    var date = Date.now();
+    var description = req.body.desc
+    var imageUrl = req.body.imageUrl
+    var postId = req.body.postId
+    var name = req.body.name
+    var dp = req.body.dp
+    var mimeType = req.body.mimeType
 
     //let sql = "INSERT INTO wallfame_blog_table (postId, desc, date, imageUrl, creatorId) VALUES (\"" + postId + "\",\"" + date + "\",\"" + imageUrl + "\",\"" + creatorId + "\",\"" + desc + "\");";
-    let s = "INSERT INTO wallfame_post_table (postId, date, description, imageUrl, creatorId, likeNo, unlike) VALUES (\"" + postId + "\", \"" + date + "\", \"" + desc + "\", \"" + imageUrl + "\", \"" + creatorId + "\", " + like + ", " + unlike + ");";
+    let s = "INSERT INTO wallfame_post_table (postId, date, description, mediaUrl, mimeType, creatorId, creatorName, creatorDp) VALUES (\"" + postId + "\", " + date + ", \"" + description + "\", \"" + imageUrl + "\", \"" + mimeType + "\", \"" + userId + "\", \"" + name + "\", \"" + dp + "\");";
     let result = await runQuery(pool, s);
     console.log("sql result " + result);
     res.status(200).send(JSON.stringify({ "message": "post added" }))
