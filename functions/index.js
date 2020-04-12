@@ -16,8 +16,8 @@ const cors = require('cors')({ origin: true })
 app.use(cors)
     // [END middleware]
 app.use(bodyParser.json({ limit: '50mb' }))
-var serviceAccount = require('./tele-a36a5-firebase-adminsdk-q3zzt-8245e30711.json')
-var databaseURL = 'https://tele-a36a5.firebaseio.com/'
+var serviceAccount = require('./expinf-firebase-adminsdk-h6sf3-7b2659facf.json')
+var databaseURL = 'https://expinf.firebaseio.com/'
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     databaseURL: databaseURL
@@ -162,31 +162,49 @@ app.post("/setPostSql", validateFirebaseIdToken(), async(req, res) => {
     console.log("body " + req.body + " " + req.user)
     var date = Date.now();
     var description = req.body.desc
-    var imageUrl = req.body.imageUrl
+    var mediaUrl = req.body.mediaUrl
+    var mediaThumbUrl = req.body.mediaThumbUrl
     var postId = req.body.postId
-    var name = req.body.name
-    var dp = req.body.dp
     var mimeType = req.body.mimeType
 
     //let sql = "INSERT INTO wallfame_blog_table (postId, desc, date, imageUrl, creatorId) VALUES (\"" + postId + "\",\"" + date + "\",\"" + imageUrl + "\",\"" + creatorId + "\",\"" + desc + "\");";
-    let s = "INSERT INTO wallfame_post_table (postId, date, description, mediaUrl, mimeType, creatorId, creatorName, creatorDp) VALUES (\"" + postId + "\", " + date + ", \"" + description + "\", \"" + imageUrl + "\", \"" + mimeType + "\", \"" + userId + "\", \"" + name + "\", \"" + dp + "\");";
+    let s = "INSERT INTO wallfame_post_table (postId, date, description, mediaUrl, mediaThumbUrl, mimeType, creatorId) VALUES (\"" + postId + "\", " + date + ", \"" + description + "\", \"" + mediaUrl + "\", \"" + mediaThumbUrl + "\", \"" + mimeType + "\", \"" + userId + "\");";
     let result = await runQuery(pool, s);
     console.log("sql result " + result);
     res.status(200).send(JSON.stringify({ "message": "post added" }))
 })
 
-app.post("/getBlogSql", async(req, res) => {
-    let postId = req.body.postId
+app.post("/getBlogSql", validateFirebaseIdToken(), async(req, res) => {
+    let userId = req.user.uid
+    let postId = req.body.nextKey
     let limit = req.body.limit
     let sql = ""
     if (postId === "") {
-        sql = "SELECT * FROM wallfame_post_table ORDER BY postId DESC limit " + limit + ";";
+        sql = "SELECT wallfame_post_table.*, userName, userDp, (CASE WHEN isl.postId IS NULL THEN 0 ELSE 1 END) as isLiked FROM wallfame_post_table INNER JOIN (SELECT userId, userName, userDp FROM wallfame_user_table)u ON u.userId = wallfame_post_table.creatorId LEFT JOIN (Select postId, userId FROM wallfame_post_like_table WHERE userId = \"" + userId + "\")isl ON  isl.postId = wallfame_post_table.postId ORDER BY wallfame_post_table.postId DESC limit " + limit + ";";
     } else {
-        sql = "SELECT * FROM wallfame_post_table WHERE postId < " + postId + " ORDER BY postId DESC limit " + limit + ";";
+        sql = "SELECT wallfame_post_table.*, userName, userDp, COUNT(l.postId) as likeCount FROM wallfame_post_table INNER JOIN (SELECT userId, userName, userDp FROM wallfame_user_table)u ON u.userId = wallfame_post_table.creatorId LEFT JOIN (SELECT postId, userId FROM wallfame_post_like_table)l ON l.postId = wallfame_post_table.postId GROUP BY wallfame_post_table.postId WHERE wallfame_post_table.postId < " + postId + " ORDER BY wallfame_post_table.postId DESC limit " + limit + ";";
     }
 
     let result = await runQuery(pool, sql);
     res.status(200).send(JSON.stringify(result))
+})
+
+app.post("/setPostLikeSql", validateFirebaseIdToken(), async(req, res) => {
+    let userId = req.user.uid
+    let postId = req.body.postId;
+    let incr = req.body.increment;
+    let sql
+    if (incr === 1) {
+        sql = "INSERT INTO wallfame_post_like_table (postId, userId) VALUES (\"" + postId + "\", \"" + userId + "\");"
+    } else {
+        sql = "DELETE FROM wallfame_post_like_table WHERE postId = \"" + postId + "\" AND userId = \"" + userId + "\";"
+    }
+    let result = await runQuery(pool, sql);
+    if (result !== null && result !== undefined) {
+        return res.status(200).send("successful")
+    } else {
+        return res.status(500).send("failed post like")
+    }
 })
 
 function validateFirebaseIdToken() {
