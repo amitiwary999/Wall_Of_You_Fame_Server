@@ -180,7 +180,7 @@ app.post("/getBlogSql", validateFirebaseIdToken(), async(req, res) => {
     let limit = req.body.limit
     let sql = ""
     if (postId === "") {
-        sql = "SELECT wallfame_post_table.*, userName, userDp, (CASE WHEN isl.postId IS NULL THEN 0 ELSE 1 END) as isLiked FROM wallfame_post_table INNER JOIN (SELECT userId, userName, userDp FROM wallfame_user_table)u ON u.userId = wallfame_post_table.creatorId LEFT JOIN (Select postId, userId FROM wallfame_post_like_table WHERE userId = \"" + userId + "\")isl ON  isl.postId = wallfame_post_table.postId ORDER BY wallfame_post_table.postId DESC limit " + limit + ";";
+        sql = "SELECT wallfame_post_table.*, userName, userDp, (CASE WHEN isl.postId IS NULL THEN 0 ELSE 1 END) as isLiked, (CASE WHEN bookmark.postId IS NULL THEN 0 ELSE 1 END) as isBookmarked FROM wallfame_post_table INNER JOIN (SELECT userId, userName, userDp FROM wallfame_user_table)u ON u.userId = wallfame_post_table.creatorId LEFT JOIN (Select postId, userId FROM wallfame_post_like_table WHERE userId = \"" + userId + "\")isl ON  isl.postId = wallfame_post_table.postId LEFT JOIN (Select postId, userId FROM wallfame_bookmark_table WHERE userId = \"" + userId + "\")bookmark ON  bookmark.postId = wallfame_post_table.postId ORDER BY wallfame_post_table.postId DESC limit " + limit + ";";
     } else {
         sql = "SELECT wallfame_post_table.*, userName, userDp, COUNT(l.postId) as likeCount FROM wallfame_post_table INNER JOIN (SELECT userId, userName, userDp FROM wallfame_user_table)u ON u.userId = wallfame_post_table.creatorId LEFT JOIN (SELECT postId, userId FROM wallfame_post_like_table)l ON l.postId = wallfame_post_table.postId GROUP BY wallfame_post_table.postId WHERE wallfame_post_table.postId < " + postId + " ORDER BY wallfame_post_table.postId DESC limit " + limit + ";";
     }
@@ -205,6 +205,15 @@ app.post("/setPostLikeSql", validateFirebaseIdToken(), async(req, res) => {
     } else {
         return res.status(500).send("failed post like")
     }
+})
+
+app.post("/setBookmarkSql", validateFirebaseIdToken(), async(req, res) => {
+    let userId = req.user.uid;
+    let postId = req.body.postId;
+
+    let sql = "INSERT INTO wallfame_bookmark_table (postId, userId) VALUES ('"+ postId +"', '"+ userId+"')"
+    let result = await runQuery(pool, sql)
+    return res.status(200).send("successful").end()
 })
 
 function validateFirebaseIdToken() {
