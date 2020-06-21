@@ -210,8 +210,13 @@ app.post("/setPostLikeSql", validateFirebaseIdToken(), async(req, res) => {
 app.post("/setBookmarkSql", validateFirebaseIdToken(), async(req, res) => {
     let userId = req.user.uid;
     let postId = req.body.postId;
-
-    let sql = "INSERT INTO wallfame_bookmark_table (postId, userId) VALUES ('"+ postId +"', '"+ userId+"')"
+    let addBookmark = req.body.addBookmark;
+    let sql = ""
+    if(addBookmark){
+        sql = "INSERT INTO wallfame_bookmark_table (postId, userId) VALUES ('" + postId + "', '" + userId + "')"
+    }else{
+        sql = "DELETE FROM wallfame_bookmark_table WHERE postId = '"+postId+"' AND userId = '"+userId+"' "
+    }
     let result = await runQuery(pool, sql)
     return res.status(200).send("successful").end()
 })
