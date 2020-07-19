@@ -174,8 +174,8 @@ app.post("/setPostSql", validateFirebaseIdToken(), async(req, res) => {
     res.status(200).send(JSON.stringify({ "message": "post added" }))
 })
 
-app.post("/getBlogSql", validateFirebaseIdToken(), async(req, res) => {
-    let userId = req.user.uid
+app.post("/getBlogSql", validateFirebaseIdToken(true), async(req, res) => {
+    let userId = req.user?req.user.uid:""
     let postId = req.body.nextKey
     let limit = req.body.limit
     let sql = ""
@@ -221,11 +221,13 @@ app.post("/setBookmarkSql", validateFirebaseIdToken(), async(req, res) => {
     return res.status(200).send("successful").end()
 })
 
-function validateFirebaseIdToken() {
+function validateFirebaseIdToken(noLoginRequired) {
     return function(req, res, next) {
+        console.log("need auth "+noLoginRequired)
         // console.log('Check if request is authorized with Firebase ID token')
         if ((!req.headers.authorization || !req.headers.authorization.startsWith('Bearer ')) &&
-            !(req.cookies && req.cookies.__session)) {
+            !(req.cookies && req.cookies.__session) && !noLoginRequired) {
+
             console.error('No Firebase ID token was passed as a Bearer token in the Authorization header.',
                     'Make sure you authorize your request by providing the following HTTP header:',
                     'Authorization: Bearer <Firebase ID Token>',
@@ -244,6 +246,9 @@ function validateFirebaseIdToken() {
             //console.log('Found "__session" cookie');
             // Read the ID Token from cookie.
             idToken = req.cookies.__session;
+        } else if (noLoginRequired) {
+            req.user = null
+            return next()
         } else {
             // No cookie
             res.status(403).send('Unauthorized')
