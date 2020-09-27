@@ -24,13 +24,20 @@ admin.initializeApp({
 })
 
 const pool = mysql.createPool({
-    host: process.env.host,
-    user: process.env.user,
-    password: process.env.password,
-    connectionLimit: 5,
-    database: process.env.database,
-    port: process.env.port
-})
+  user: process.env.sqlUser,
+  //   host: '34.93.68.9',
+  password: process.env.sqlPassword,
+  database: process.env.sqlDatabase,
+  socketPath: "/cloudsql/expinf:asia-south1:famouswall",
+  connectionLimit: 100,
+  connectTimeout: 10000, //  10 seconds
+  acquireTimeout: 10000, //  10 seconds
+  waitForConnections: true, //  Default: true
+  queueLimit: 0,
+  charset: "utf8mb4_unicode_ci", //  for special characters and emoji, else error
+  supportBigNumbers: true,
+  bigNumberStrings: true,
+});
 
 async function runQuery(pool, sqlQuery) {
     return pool.then(p => {
@@ -186,6 +193,7 @@ app.post("/getBlogSql", validateFirebaseIdToken(true), async(req, res) => {
     }
 
     let result = await runQuery(pool, sql);
+    console.log("result blog "+result);
     res.status(200).send(JSON.stringify(result))
 })
 
@@ -360,7 +368,8 @@ function secondsLeftBeforeEndOfHour(date) {
 }
 // [END seconds_left]
 
-// [START export]
-// Export the express app as an HTTP Cloud Function
-exports.app = functions.https.onRequest(app)
-    // [END export]
+const PORT = process.env.PORT || 8082;
+app.listen(PORT, async () => {
+  console.log(`App listening on port ${PORT}`);
+  console.log("Press Ctrl+C to quit.");
+});
