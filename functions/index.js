@@ -229,6 +229,31 @@ app.post("/setBookmarkSql", validateFirebaseIdToken(), async(req, res) => {
     return res.status(200).send("successful").end()
 })
 
+app.post("/postVideoRequest", validateFirebaseIdToken(), async(req, res) => {
+    let requestorId = req.user.uid;
+    let inviteeId = req.body.inviteeId
+    let date = Date.now();
+
+    let sql = "INSERT INTO wallfame_video_request_table(requestorId, inviteeId, updatedAt) VALUES ('"+ requestorId + "', '" + inviteeId + "', '" + date + "') ON DUPLICATE KEY UPDATE updatedAt = VALUES(updatedAt);"
+    let result = await runQuery(pool, sql);
+    if(result ? result.affectedRows : false){
+        res.status(200).send('successful').end();
+    }else{
+        res.status(500).send("can't make video request").end();
+    }
+})
+
+app.post("/getVideoRequest", validateFirebaseIdToken(), async(req, res) => {
+    let inviteeId = req.user.uid;
+    let sql = "SELECT * FROM wallfame_video_request_table WHERE inviteeId = '"+inviteeId+"'";
+    let result = await runQuery(pool, sql);
+    if(result ? result.length : false){
+        res.status(200).send(JSON.stringify(result)).end()
+    }else{
+        res.status(500).send("No video request").end()
+    }
+})
+
 function validateFirebaseIdToken(noLoginRequired) {
     return function(req, res, next) {
         console.log("need auth "+noLoginRequired)
