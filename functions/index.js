@@ -181,7 +181,7 @@ app.post("/setPostSql", validateFirebaseIdToken(), async(req, res) => {
     res.status(200).send(JSON.stringify({ "message": "post added" }))
 })
 
-app.post("/getBlogSql", validateFirebaseIdToken(true), async(req, res) => {
+app.post("/getBlogSql", validateFirebaseIdToken(false), async(req, res) => {
     let userId = req.user?req.user.uid:""
     let postId = req.body.nextKey
     let limit = req.body.limit
@@ -245,7 +245,7 @@ app.post("/postVideoRequest", validateFirebaseIdToken(), async(req, res) => {
 
 app.post("/getVideoRequest", validateFirebaseIdToken(), async(req, res) => {
     let inviteeId = req.user.uid;
-    let sql = "SELECT * FROM wallfame_video_request_table WHERE inviteeId = '"+inviteeId+"'";
+    let sql = "SELECT * FROM wallfame_video_request_table INNER JOIN (SELECT userId, userName, userDp FROM wallfame_user_table)u ON u.userId = wallfame_video_request_table.requestorId WHERE inviteeId = '"+ inviteeId+"'";
     let result = await runQuery(pool, sql);
     if(result ? result.length : false){
         res.status(200).send(JSON.stringify(result)).end()
