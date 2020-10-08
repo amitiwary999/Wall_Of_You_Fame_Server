@@ -232,9 +232,18 @@ app.post("/setBookmarkSql", validateFirebaseIdToken(), async(req, res) => {
 app.post("/postVideoRequest", validateFirebaseIdToken(), async(req, res) => {
     let requestorId = req.user.uid;
     let inviteeId = req.body.inviteeId
+    let status = req.body.status
     let date = Date.now();
+    if(status == 0){
+      inviteeId = req.body.inviteeId;
+      requestorId = req.user.uid; 
+    }else{
+        if(stats == 1) date = req.body.callTime;
+      requestorId = req.body.inviteeId;
+      inviteeId = req.user.uid;  
+    }
 
-    let sql = "INSERT INTO wallfame_video_request_table(requestorId, inviteeId, updatedAt) VALUES ('"+ requestorId + "', '" + inviteeId + "', '" + date + "') ON DUPLICATE KEY UPDATE updatedAt = VALUES(updatedAt);"
+    let sql = "INSERT INTO wallfame_video_request_table(requestorId, inviteeId, status, updatedAt) VALUES ('"+ requestorId + "', '" + inviteeId + "','"+ status +"', '" + date + "') ON DUPLICATE KEY UPDATE updatedAt = VALUES(updatedAt);"
     let result = await runQuery(pool, sql);
     if(result ? result.affectedRows : false){
         res.status(200).send('successful').end();
