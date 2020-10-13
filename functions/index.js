@@ -25,7 +25,7 @@ admin.initializeApp({
 
 const pool = mysql.createPool({
   user: process.env.sqlUser,
-  //   host: '34.93.68.9',
+    // host: '34.93.68.9',
   password: process.env.sqlPassword,
   database: process.env.sqlDatabase,
   socketPath: "/cloudsql/expinf:asia-south1:famouswall",
@@ -181,7 +181,7 @@ app.post("/setPostSql", validateFirebaseIdToken(), async(req, res) => {
     res.status(200).send(JSON.stringify({ "message": "post added" }))
 })
 
-app.post("/getBlogSql", validateFirebaseIdToken(false), async(req, res) => {
+app.post("/getBlogSql", validateFirebaseIdToken(true), async(req, res) => {
     let userId = req.user?req.user.uid:""
     let postId = req.body.nextKey
     let limit = req.body.limit
@@ -233,17 +233,16 @@ app.post("/postVideoRequest", validateFirebaseIdToken(), async(req, res) => {
     let requestorId = req.user.uid;
     let inviteeId = req.body.inviteeId
     let status = req.body.status
-    let date = Date.now();
+    let date = req.body.callTime;
     if(status == 0){
       inviteeId = req.body.inviteeId;
       requestorId = req.user.uid; 
     }else{
-        if(stats == 1) date = req.body.callTime;
       requestorId = req.body.inviteeId;
       inviteeId = req.user.uid;  
     }
 
-    let sql = "INSERT INTO wallfame_video_request_table(requestorId, inviteeId, status, updatedAt) VALUES ('"+ requestorId + "', '" + inviteeId + "','"+ status +"', '" + date + "') ON DUPLICATE KEY UPDATE updatedAt = VALUES(updatedAt);"
+    let sql = "INSERT INTO wallfame_video_request_table(requestorId, inviteeId, status, updatedAt) VALUES ('"+ requestorId + "', '" + inviteeId + "','"+ status +"', '" + date + "') ON DUPLICATE KEY UPDATE status = VALUES(status), updatedAt = VALUES(updatedAt);"
     let result = await runQuery(pool, sql);
     if(result ? result.affectedRows : false){
         res.status(200).send('successful').end();
