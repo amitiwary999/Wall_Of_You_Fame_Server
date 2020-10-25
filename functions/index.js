@@ -185,27 +185,32 @@ app.post("/getBlogSql", validateFirebaseIdToken(true), async(req, res) => {
     let userId = req.user?req.user.uid:""
     let postId = req.body.nextKey
     let limit = req.body.limit
-    let sql = ""
-    if (postId === "") {
-        sql = "SELECT group_concat(mediaUrl) as mediaUrl, group_concat(mediaThumbUrl) as mediaThumbUrl, group_concat(wallfame_post_table.postId) as postId, group_concat(date) as date, group_concat(description) as description, group_concat(mimeType) as mimeType, userName, userDp, wallfame_post_table.creatorId, group_concat((CASE WHEN isl.postId IS NULL THEN 0 ELSE 1 END)) as isLiked, group_concat((CASE WHEN bookmark.postId IS NULL THEN 0 ELSE 1 END)) as isBookmarked FROM wallfame_post_table INNER JOIN (SELECT userId, userName, userDp FROM wallfame_user_table)u ON u.userId = wallfame_post_table.creatorId LEFT JOIN (Select postId, userId FROM wallfame_post_like_table WHERE userId = \"" + userId + "\")isl ON  isl.postId = wallfame_post_table.postId LEFT JOIN (Select postId, userId FROM wallfame_bookmark_table WHERE userId = \"" + userId + "\")bookmark ON  bookmark.postId = wallfame_post_table.postId GROUP BY creatorId having count(*) >0 ORDER BY group_concat(wallfame_post_table.postId) DESC limit " + limit + ";";
-    } else {
-        sql = "SELECT wallfame_post_table.*, userName, userDp, COUNT(l.postId) as likeCount FROM wallfame_post_table INNER JOIN (SELECT userId, userName, userDp FROM wallfame_user_table)u ON u.userId = wallfame_post_table.creatorId LEFT JOIN (SELECT postId, userId FROM wallfame_post_like_table)l ON l.postId = wallfame_post_table.postId GROUP BY wallfame_post_table.postId WHERE wallfame_post_table.postId < " + postId + " ORDER BY wallfame_post_table.postId DESC limit " + limit + ";";
-    }
+    // let sql = ""
+
+    //for now no need to do pagination
+    let  sql = "SELECT group_concat(mediaUrl) as mediaUrl, group_concat(mediaThumbUrl) as mediaThumbUrl, group_concat(wallfame_post_table.postId) as postId, group_concat(date) as date, group_concat(description) as description, group_concat(mimeType) as mimeType, userName, userDp, wallfame_post_table.creatorId, (CASE WHEN isl.famousUserId IS NULL THEN 0 ELSE 1 END) as isLiked, group_concat((CASE WHEN bookmark.postId IS NULL THEN 0 ELSE 1 END)) as isBookmarked FROM wallfame_post_table INNER JOIN (SELECT userId, userName, userDp FROM wallfame_user_table)u ON u.userId = wallfame_post_table.creatorId LEFT JOIN (Select famousUserId, userId FROM wallfame_post_like_table WHERE userId = \"" + userId + "\")isl ON  isl.famousUserId = wallfame_post_table.creatorId LEFT JOIN (Select postId, userId FROM wallfame_bookmark_table WHERE userId = \"" + userId + "\")bookmark ON  bookmark.postId = wallfame_post_table.postId GROUP BY creatorId having count(*) >0 ORDER BY group_concat(wallfame_post_table.postId) DESC limit " + limit + ";";
+
+    // if (postId === "") {
+    //     sql = "SELECT group_concat(mediaUrl) as mediaUrl, group_concat(mediaThumbUrl) as mediaThumbUrl, group_concat(wallfame_post_table.postId) as postId, group_concat(date) as date, group_concat(description) as description, group_concat(mimeType) as mimeType, userName, userDp, wallfame_post_table.creatorId, group_concat((CASE WHEN isl.postId IS NULL THEN 0 ELSE 1 END)) as isLiked, group_concat((CASE WHEN bookmark.postId IS NULL THEN 0 ELSE 1 END)) as isBookmarked FROM wallfame_post_table INNER JOIN (SELECT userId, userName, userDp FROM wallfame_user_table)u ON u.userId = wallfame_post_table.creatorId LEFT JOIN (Select famousUserId, userId FROM wallfame_post_like_table WHERE userId = \"" + userId + "\")isl ON  isl.famousUserId = wallfame_post_table.creatorId LEFT JOIN (Select postId, userId FROM wallfame_bookmark_table WHERE userId = \"" + userId + "\")bookmark ON  bookmark.postId = wallfame_post_table.postId GROUP BY creatorId having count(*) >0 ORDER BY group_concat(wallfame_post_table.postId) DESC limit " + limit + ";";
+    // } else {
+    //     sql = "SELECT wallfame_post_table.*, userName, userDp, COUNT(l.postId) as likeCount FROM wallfame_post_table INNER JOIN (SELECT userId, userName, userDp FROM wallfame_user_table)u ON u.userId = wallfame_post_table.creatorId LEFT JOIN (SELECT postId, userId FROM wallfame_post_like_table)l ON l.postId = wallfame_post_table.postId GROUP BY wallfame_post_table.postId WHERE wallfame_post_table.postId < " + postId + " ORDER BY wallfame_post_table.postId DESC limit " + limit + ";";
+    // }
 
     let result = await runQuery(pool, sql);
     console.log("result blog "+result);
     res.status(200).send(JSON.stringify(result))
 })
 
+//liked the famous user
 app.post("/setPostLikeSql", validateFirebaseIdToken(), async(req, res) => {
     let userId = req.user.uid
-    let postId = req.body.postId;
+    let famousUserId = req.body.userId;
     let incr = req.body.increment;
     let sql
     if (incr === 1) {
-        sql = "INSERT INTO wallfame_post_like_table (postId, userId) VALUES (\"" + postId + "\", \"" + userId + "\");"
+        sql = "INSERT INTO wallfame_post_like_table (famousUserId, userId) VALUES (\"" + famousUserId + "\", \"" + userId + "\");"
     } else {
-        sql = "DELETE FROM wallfame_post_like_table WHERE postId = \"" + postId + "\" AND userId = \"" + userId + "\";"
+        sql = "DELETE FROM wallfame_post_like_table WHERE famousUserId = \"" + famousUserId + "\" AND userId = \"" + userId + "\";"
     }
     let result = await runQuery(pool, sql);
     if (result !== null && result !== undefined) {
