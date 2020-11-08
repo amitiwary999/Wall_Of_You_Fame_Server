@@ -239,15 +239,22 @@ app.post("/postVideoRequest", validateFirebaseIdToken(), async(req, res) => {
     let inviteeId = req.body.inviteeId
     let status = req.body.status
     let date = req.body.callTime;
+    let id =  requestorId+inviteeId
+    let hashId = generateHash(id);
     if(status == 0){
       inviteeId = req.body.inviteeId;
       requestorId = req.user.uid; 
+      let alreadyRequestedQuery =  "SELECT * FROM wallfame_video_requests_table WHERE status = 0 AND id='"+id+"' OR status=1 AND updatedAt > CURRENT_TIMESTAMP";
+      let result =  await runQuery(alreadyRequestedQuery);
+      if(result.length>0){
+          return res.status(500).send({message: 'You can make new request if your previous request rejected or completed'})
+      }
     }else{
       requestorId = req.body.inviteeId;
       inviteeId = req.user.uid;  
     }
 
-    let sql = "INSERT INTO wallfame_video_request_table(requestorId, inviteeId, status, updatedAt) VALUES ('"+ requestorId + "', '" + inviteeId + "','"+ status +"', '" + date + "') ON DUPLICATE KEY UPDATE status = VALUES(status), updatedAt = VALUES(updatedAt);"
+    let sql = "INSERT INTO wallfame_video_requests_table(id, requestorId, inviteeId, status, updatedAt) VALUES ('"+hashId+"', '"+ requestorId + "', '" + inviteeId + "','"+ status +"', '" + date + "') ON DUPLICATE KEY UPDATE status = VALUES(status), updatedAt = VALUES(updatedAt);"
     let result = await runQuery(pool, sql);
     if(result ? result.affectedRows : false){
         res.status(200).send('successful').end();
@@ -256,9 +263,20 @@ app.post("/postVideoRequest", validateFirebaseIdToken(), async(req, res) => {
     }
 })
 
-app.post("/getVideoRequest", validateFirebaseIdToken(), async(req, res) => {
+app.post("/getVideoRequestReceived", validateFirebaseIdToken(), async(req, res) => {
     let inviteeId = req.user.uid;
-    let sql = "SELECT * FROM wallfame_video_request_table INNER JOIN (SELECT userId, userName, userDp FROM wallfame_user_table)u ON u.userId = wallfame_video_request_table.requestorId WHERE inviteeId = '"+ inviteeId+"'";
+    let sql = "SELECT * FROM wallfame_video_requests_table INNER JOIN (SELECT userId, userName, userDp FROM wallfame_user_table)u ON u.userId = wallfame_video_requests_table.requestorId WHERE inviteeId = '"+ inviteeId+"'";
+    let result = await runQuery(pool, sql);
+    if(result ? result.length : false){
+        res.status(200).send(JSON.stringify(result)).end()
+    }else{
+        res.status(500).send("No video request").end()
+    }
+})
+
+app.post("/getVideoRequestSent", validateFirebaseIdToken(), async(req, res) => {
+    let requestorId = req.user.uid;
+    let sql = "SELECT * FROM wallfame_video_requests_table INNER JOIN (SELECT userId, userName, userDp FROM wallfame_user_table)u ON u.userId = wallfame_video_requests_table.inviteeId WHERE requestorId = '"+ requestorId+"'";
     let result = await runQuery(pool, sql);
     if(result ? result.length : false){
         res.status(200).send(JSON.stringify(result)).end()
@@ -335,7 +353,7 @@ async function insertUser(name, dp, email, userId) {
 }
 
 async function insertUserSql(userName, userDp, userEmail, userId) {
-    let s = "INSERT INTO wallfame_user_table (userId, userName, userDp, userEmail) VALUES (\"" + userId + "\", \"" + userName + "\", \"" + userDp + "\", \"" + userEmail + "\");";
+    let s = "INSERT IGNORE INTO wallfame_user_table (userId, userName, userDp, userEmail) VALUES (\"" + userId + "\", \"" + userName + "\", \"" + userDp + "\", \"" + userEmail + "\");";
     let result = await runQuery(pool, s);
     return result
 }
@@ -397,14 +415,17 @@ async function updateLike(postId, incr, userId) {
     }
 }
 
-// [START seconds_left]
-// Returns the number of seconds left before the next hour starts.
-function secondsLeftBeforeEndOfHour(date) {
-    const m = date.getMinutes();
-    const s = date.getSeconds();
-    return 3600 - (m * 60) - s;
+function generateHash(string) {
+    var hash = 0;
+    if (string.length == 0)
+        return hash;
+    for (let i = 0; i < string.length; i++) {
+        var charCode = string.charCodeAt(i);
+        hash = ((hash << 7) - hash) + charCode;
+        hash = hash & hash;
+    }
+    return hash;
 }
-// [END seconds_left]
 
 const PORT = process.env.PORT || 8082;
 app.listen(PORT, async () => {

@@ -2,30 +2,31 @@
     "name": "chat-server-functions",
     "description": "wall of u fame app server",
     "dependencies": {
+        "body-parser": "^1.19.0",
         "cors": "^2.8.5",
+        "dotenv": "8.2.0",
         "express": "^4.16.4",
         "firebase-admin": "~8.7.0",
         "firebase-functions": "^3.3.0",
-        "body-parser": "^1.19.0",
-        "nodemon": "^1.19.4",
         "mysql": "^2.17.1",
+        "nodemon": "^1.19.4",
         "promise-mysql": "^4.1.1",
-        "dotenv": "8.2.0"
+        "react-perfect-scrollbar": "^1.5.8"
     },
     "devDependencies": {
         "eslint": "^4.13.1",
         "eslint-plugin-promise": "^3.6.0",
         "@google-cloud/nodejs-repo-tools": "^3.0.0"
     },
-  "cloud-repo-tools": {
-    "test": {
-      "app": {
-        "msg": "Hello, world!"
-      }
+    "cloud-repo-tools": {
+        "test": {
+            "app": {
+                "msg": "Hello, world!"
+            }
+        },
+        "requiresKeyFile": true,
+        "requiresProjectId": true
     },
-    "requiresKeyFile": true,
-    "requiresProjectId": true
-  },
     "scripts": {
         "lint": "./node_modules/.bin/eslint --max-warnings=0 .",
         "deploy": "gcloud app deploy",
