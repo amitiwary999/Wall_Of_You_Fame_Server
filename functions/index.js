@@ -241,20 +241,24 @@ app.post("/postVideoRequest", validateFirebaseIdToken(), async(req, res) => {
     let date = req.body.callTime;
     let id =  requestorId+inviteeId
     let hashId = generateHash(id);
+    let roomNameId = requestorId+""+Date.now()+""+inviteeId;
+    let roomNameHash = generateHash(roomNameId);
     if(status == 0){
       inviteeId = req.body.inviteeId;
       requestorId = req.user.uid; 
-      let alreadyRequestedQuery =  "SELECT * FROM wallfame_video_requests_table WHERE status = 0 AND id='"+id+"' OR status=1 AND updatedAt > CURRENT_TIMESTAMP";
-      let result =  await runQuery(alreadyRequestedQuery);
+      let alreadyRequestedQuery =  "SELECT * FROM wallfame_video_requests_table WHERE status = 0 AND id='"+hashId+"' OR status=1 AND updatedAt > CURRENT_TIMESTAMP";
+      let result =  await runQuery(pool, alreadyRequestedQuery);
       if(result.length>0){
           return res.status(500).send({message: 'You can make new request if your previous request rejected or completed'})
       }
     }else{
-      requestorId = req.body.inviteeId;
-      inviteeId = req.user.uid;  
+        requestorId = req.body.inviteeId;
+        inviteeId = req.user.uid; 
+        let id =  requestorId+inviteeId
+        hashId = generateHash(id); 
     }
 
-    let sql = "INSERT INTO wallfame_video_requests_table(id, requestorId, inviteeId, status, updatedAt) VALUES ('"+hashId+"', '"+ requestorId + "', '" + inviteeId + "','"+ status +"', '" + date + "') ON DUPLICATE KEY UPDATE status = VALUES(status), updatedAt = VALUES(updatedAt);"
+    let sql = "INSERT INTO wallfame_video_requests_table(id, requestorId, inviteeId, roomName, status, updatedAt) VALUES ('"+hashId+"', '"+ requestorId + "', '" + inviteeId + "','"+roomNameHash+"', '"+ status +"', '" + date + "') ON DUPLICATE KEY UPDATE status = VALUES(status), updatedAt = VALUES(updatedAt);"
     let result = await runQuery(pool, sql);
     if(result ? result.affectedRows : false){
         res.status(200).send('successful').end();
@@ -282,6 +286,18 @@ app.post("/getVideoRequestSent", validateFirebaseIdToken(), async(req, res) => {
         res.status(200).send(JSON.stringify(result)).end()
     }else{
         res.status(500).send("No video request").end()
+    }
+})
+
+app.post("/getroomName", validateFirebaseIdToken(), async(req, res) => {
+    let userId = req.user.uid;
+    let id = req.body.roomQueryId;
+    let roomnameQuery = "SELECT roomName from wallfame_video_requests_table WHERE (inviteeId = '"+userId+"' OR requestorId = '"+userId+"') AND id='"+id+"'"
+    let result = await runQuery(pool, roomnameQuery)
+    if(result.length>0){
+        res.status(200).send(result[0]);
+    }else{
+        res.status(500).send({message: 'no room'})
     }
 })
 
