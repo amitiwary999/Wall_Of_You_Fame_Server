@@ -258,7 +258,7 @@ app.post("/postVideoRequest", validateFirebaseIdToken(), async(req, res) => {
         hashId = generateHash(id); 
     }
 
-    let sql = "INSERT INTO wallfame_video_requests_table(id, requestorId, inviteeId, roomName, status, updatedAt) VALUES ('"+hashId+"', '"+ requestorId + "', '" + inviteeId + "','"+roomNameHash+"', '"+ status +"', '" + date + "') ON DUPLICATE KEY UPDATE status = VALUES(status), updatedAt = VALUES(updatedAt);"
+    let sql = "INSERT INTO wallfame_video_requests_table(id, requestorId, inviteeId, roomName, status, updatedAt) VALUES ('"+hashId+"', '"+ requestorId + "', '" + inviteeId + "','"+roomNameHash+"', '"+ status +"', '" + date + "') ON DUPLICATE KEY UPDATE status = '"+status+"', updatedAt = '"+date+"';"
     let result = await runQuery(pool, sql);
     if(result ? result.affectedRows : false){
         res.status(200).send('successful').end();
