@@ -267,11 +267,23 @@ app.post("/postVideoRequest", validateFirebaseIdToken(), async(req, res) => {
     }
 })
 
+app.post("/deleteVideoRequest", validateFirebaseIdToken(), async(req, res) => {
+    let id = req.body.id;
+    let sql = "DELETE FROM wallfame_video_requests_table WHERE id = '"+id+"'";
+    let result = await runQuery(pool, sql);
+    console.log("delete video call request result "+JSON.stringify(result))
+    if(result){
+        res.status(200).send("deleted successfully")
+    }else{
+        res.status(500).send("something went wrong")
+    }
+})
+
 app.post("/getVideoRequestReceived", validateFirebaseIdToken(), async(req, res) => {
     let inviteeId = req.user.uid;
     let sql = "SELECT * FROM wallfame_video_requests_table INNER JOIN (SELECT userId, userName, userDp FROM wallfame_user_table)u ON u.userId = wallfame_video_requests_table.requestorId WHERE inviteeId = '"+ inviteeId+"' AND status != 2";
     let result = await runQuery(pool, sql);
-    if(result ? result.length : false){
+    if(result){
         res.status(200).send(JSON.stringify(result)).end()
     }else{
         res.status(500).send("No video request").end()
