@@ -2,7 +2,6 @@
 'use strict'
 
 // [START import]
-const functions = require('firebase-functions')
 const express = require('express')
 var bodyParser = require('body-parser')
 var admin = require('firebase-admin')
@@ -18,10 +17,10 @@ app.use(cors)
 app.use(bodyParser.json({ limit: '50mb' }))
 var serviceAccount = require('./expinf-firebase-adminsdk-h6sf3-7b2659facf.json')
 var databaseURL = 'https://expinf.firebaseio.com/'
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    databaseURL: databaseURL
-})
+// admin.initializeApp({
+//     credential: admin.credential.cert(serviceAccount),
+//     databaseURL: databaseURL
+// })
 
 const pool = mysql.createPool({
   user: process.env.sqlUser,
@@ -107,6 +106,9 @@ app.get('/', (req, res) => {
         res.send('hours is' + hours)
     })
     // [END index]
+
+app.use('/sendRequest', require('./videoRequestSent/route'))
+app.use('/receivedRequest', require('./videoRequestReceived/route'))
 
 app.post("/setPost", validateFirebaseIdToken(), async(req, res) => {
     var userId = req.user.uid
