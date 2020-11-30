@@ -109,6 +109,7 @@ app.get('/', (req, res) => {
 
 app.use('/sendRequest', require('./videoRequestSent/route'))
 app.use('/receivedRequest', require('./videoRequestReceived/route'))
+app.use('/famousPost', require('./famousPost/route'))
 
 app.post("/setPost", validateFirebaseIdToken(), async(req, res) => {
     var userId = req.user.uid
