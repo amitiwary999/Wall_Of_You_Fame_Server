@@ -1,4 +1,4 @@
-const {fetchFamousPost} = require('../function/fetchFamousPost')
+const {fetchFamousPost} = require('../function/fetchFamousPosts')
 
 module.exports = async(req, res) => {
     let userId = req.user.uid? req.user.uid: ""

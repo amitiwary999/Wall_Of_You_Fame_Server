@@ -7,6 +7,6 @@ router.use('', validateFirebaseIdToken())
 
 router.get('', require('./method/get'));
 router.post('', require('./method/post'));
-
+router.delete('', require('./method/delete'))
 
 module.exports = router;
