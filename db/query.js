@@ -4,10 +4,10 @@ const mysql = require('promise-mysql');
 
 const pool = mysql.createPool({
   user: process.env.sqlUser,
-    // host: '34.93.68.9',
+    host: '34.93.68.9',
   password: process.env.sqlPassword,
   database: process.env.sqlDatabase,
-  socketPath: "/cloudsql/expinf:asia-south1:famouswall",
+//   socketPath: "/cloudsql/expinf:asia-south1:famouswall",
   connectionLimit: 100,
   connectTimeout: 10000, //  10 seconds
   acquireTimeout: 10000, //  10 seconds

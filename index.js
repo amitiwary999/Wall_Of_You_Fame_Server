@@ -95,21 +95,10 @@ async function runQuery(pool, sqlQuery) {
         })
 }
 
-// [START index]
-// This endpoint provides displays the index page.
-app.get('/', (req, res) => {
-        const date = new Date()
-        const hours = (date.getHours() % 12) + 1; // London is UTC + 1hr
-        // [START_EXCLUDE silent]
-        res.set('Cache-Control', `public, max-age=${secondsLeftBeforeEndOfHour(date)}`)
-            // [END_EXCLUDE silent]
-        res.send('hours is' + hours)
-    })
-    // [END index]
-
 app.use('/sendRequest', require('./videoRequestSent/route'))
 app.use('/receivedRequest', require('./videoRequestReceived/route'))
 app.use('/famousPost', require('./famousPost/route'))
+app.use("/profile", require('./profile/route'))
 
 app.post("/setPost", validateFirebaseIdToken(), async(req, res) => {
     var userId = req.user.uid
