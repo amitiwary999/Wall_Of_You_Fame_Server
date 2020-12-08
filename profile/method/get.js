@@ -1,7 +1,8 @@
 const {fetchProfile} = require('../functions/fetchUserProfile')
 
 module.exports = async(req, res) => {
-    await fetchProfile(req.query)
+    let userId = res.user ? res.user.uid : ""
+    await fetchProfile(req.query, userId)
     .then(result => {
         res.status(200).send(result)
     })
