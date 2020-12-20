@@ -196,13 +196,13 @@ app.post("/getBlogSql", validateFirebaseIdToken(true), async(req, res) => {
 //liked the famous user
 app.post("/setPostLikeSql", validateFirebaseIdToken(), async(req, res) => {
     let userId = req.user.uid
-    let famousUserId = req.body.userId;
+    let postId = req.body.postId;
     let incr = req.body.increment;
     let sql
     if (incr === 1) {
-        sql = "INSERT INTO wallfame_post_like_table (famousUserId, userId) VALUES (\"" + famousUserId + "\", \"" + userId + "\");"
+        sql = "INSERT INTO wallfame_post_like_table (postId, userId) VALUES (\"" + postId + "\", \"" + userId + "\");"
     } else {
-        sql = "DELETE FROM wallfame_post_like_table WHERE famousUserId = \"" + famousUserId + "\" AND userId = \"" + userId + "\";"
+        sql = "DELETE FROM wallfame_post_like_table WHERE postId = \"" + postId + "\" AND userId = \"" + userId + "\";"
     }
     let result = await runQuery(pool, sql);
     if (result !== null && result !== undefined) {
