@@ -5,7 +5,7 @@ const verifyInput= (...params) => {
             throw `Property missing: ${name}`
         case  'object' || 'boolean':
             return value;
-        case 'number':
+        case 'number': {
             let zeroIntegerAllowed = params[2];
             if(zeroIntegerAllowed == ZERO_INT_ALLOWED){
                 return value;
@@ -16,6 +16,7 @@ const verifyInput= (...params) => {
                     throw `Property: ${name} shoukd be greater than zero`
                 }
             }
+        }
         default:
             let forceFormat = params[1] ? params[1] : '';
             let zeroIntegerAllowed = params[2] ? params[2] : "";
