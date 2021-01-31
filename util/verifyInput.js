@@ -1,3 +1,5 @@
+const {ZERO_INT_ALLOWED, CHECK_INT_FORMAT, CHECK_TIME_FORMAT, CHECK_DATE_FORMAT} = require('./constant')
+
 const verifyInput= (...params) => {
     let value = params[0];
     switch (typeof value){
