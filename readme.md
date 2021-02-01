@@ -159,7 +159,7 @@ _input_: authorization required
 {
     "id": "id of the request to delete"
 }
-
+```
 _output_: 
 
 _failed status code_: 400 if input wrong and 500 if something went wrong.
@@ -194,3 +194,13 @@ _success_: 200 status code
     "updatedAt": "latest time when the request updated"
 }
 ```
+
+## folder structure
+
+_create new folder if any new API need which si not part of current folder like if not part of profile, videorequest send, videorequest receive, post etc_
+
+_each folder should have **route** which contains get, post etc http method, method folder for different http method input check and make function call and functions call which contains logic like database call for http method_
+
+## coding pattern
+
+_use router.use('', validateFirebaseIdToken()) to enforce the authorization for the other methods. So all route after that require authorization.

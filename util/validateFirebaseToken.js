@@ -6,6 +6,7 @@ admin.initializeApp({
     databaseURL: databaseURL
 })
 
+//if noLoginRequired is true then it means no authentication required for profile
 function validateFirebaseIdToken(noLoginRequired) {
     return function(req, res, next) {
         console.log("need auth "+noLoginRequired)
