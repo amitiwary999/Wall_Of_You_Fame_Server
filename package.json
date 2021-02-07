@@ -5,6 +5,7 @@
         "body-parser": "^1.19.0",
         "cors": "^2.8.5",
         "dotenv": "8.2.0",
+        "env-cmd": "^10.1.0",
         "express": "^4.16.4",
         "firebase-admin": "~8.7.0",
         "firebase-functions": "^3.3.0",
@@ -28,9 +29,10 @@
         "requiresProjectId": true
     },
     "scripts": {
+        "local": "export NODE_ENV=development&& env-cmd -f .env.development nodemon app.js",
         "lint": "./node_modules/.bin/eslint --max-warnings=0 .",
         "deploy": "gcloud app deploy",
-        "start": "nodemon app.js",
+        "start": "export NODE_ENV=production&& env-cmd -f .env.production nodemon app.js",
         "system-test": "repo-tools test app",
         "test": "npm run system-test",
         "e2e-test": "repo-tools test deploy"

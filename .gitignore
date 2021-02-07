@@ -2,3 +2,5 @@ tele-a36a5-firebase-adminsdk-q3zzt-8245e30711.json
 .env
 expinf-firebase-adminsdk-h6sf3-7b2659facf.json
 node_modules
+.env.production
+.env.development

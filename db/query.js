@@ -1,22 +1,30 @@
 /* eslint-disable promise/no-nesting */
 require('dotenv').config()
+const { config } = require('firebase-functions');
 const mysql = require('promise-mysql');
 
-const pool = mysql.createPool({
-  user: process.env.sqlUser,
-    // host: '34.93.68.9',
-  password: process.env.sqlPassword,
-  database: process.env.sqlDatabase,
-  socketPath: "/cloudsql/expinf:asia-south1:famouswall",
-  connectionLimit: 100,
-  connectTimeout: 10000, //  10 seconds
-  acquireTimeout: 10000, //  10 seconds
-  waitForConnections: true, //  Default: true
-  queueLimit: 0,
-  charset: "utf8mb4_unicode_ci", //  for special characters and emoji, else error
-  supportBigNumbers: true,
-  bigNumberStrings: true,
-});
+let sqlConfig = {
+    user: process.env.sqlUser,
+    password: process.env.sqlPassword,
+    database: process.env.sqlDatabase,
+    connectionLimit: 100,
+    connectTimeout: 10000, //  10 seconds
+    acquireTimeout: 10000, //  10 seconds
+    waitForConnections: true, //  Default: true
+    queueLimit: 0,
+    charset: "utf8mb4_unicode_ci", //  for special characters and emoji, else error
+    supportBigNumbers: true,
+}
+
+if(process.env.NODE_ENV === 'production'){
+    sqlConfig.socketPath = process.env.sqlSocketPath
+}
+
+if(process.env.NODE_ENV === 'development'){
+    sqlConfig.host = process.env.host
+}
+
+const pool = mysql.createPool(sqlConfig);
 
 async function runQuery(sqlQuery) {
     return pool.then(p => {
@@ -51,6 +59,7 @@ async function runQuery(sqlQuery) {
                                     connection.release();
                                     return null;
                                 })
+                                throw "not able to run query"
                         })
                 })
                 .catch(error => {
@@ -66,6 +75,7 @@ async function runQuery(sqlQuery) {
                             connection.release();
                             return null;
                         })
+                    throw "not able to begin transaction"    
                 })
         })
         .catch(error => {
