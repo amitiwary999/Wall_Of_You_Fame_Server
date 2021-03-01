@@ -4,24 +4,17 @@ const { config } = require('firebase-functions');
 const mysql = require('promise-mysql');
 
 let sqlConfig = {
-    user: process.env.sqlUser,
-    password: process.env.sqlPassword,
-    database: process.env.sqlDatabase,
-    connectionLimit: 100,
-    connectTimeout: 10000, //  10 seconds
-    acquireTimeout: 10000, //  10 seconds
+    user: process.env.RDS_SQL_USER,
+    password: process.env.RDS_SQL_PASSWORD,
+    host: process.env.RDS_SQL_HOST,
+    port: process.env.RDS_SQL_PORT,
+    connectionLimit: process.env.CONNECTION_LIMIT,
+    connectTimeout: process.env.CONNECT_TIMEOUT, //  10 seconds
+    acquireTimeout: process.env.ACQUIRE_TIMEOUT, //  10 seconds
     waitForConnections: true, //  Default: true
     queueLimit: 0,
     charset: "utf8mb4_unicode_ci", //  for special characters and emoji, else error
     supportBigNumbers: true,
-}
-
-if(process.env.NODE_ENV === 'production'){
-    sqlConfig.socketPath = process.env.sqlSocketPath
-}
-
-if(process.env.NODE_ENV === 'development'){
-    sqlConfig.host = process.env.host
 }
 
 const pool = mysql.createPool(sqlConfig);

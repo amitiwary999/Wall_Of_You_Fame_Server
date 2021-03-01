@@ -1,5 +1,5 @@
 var admin = require('firebase-admin')
-var serviceAccount = require('../expinf-firebase-adminsdk-h6sf3-7b2659facf.json')
+var serviceAccount = require('../modechange-d4996-firebase-adminsdk-j90rs-e17e0c1a24.json')
 var databaseURL = 'https://expinf.firebaseio.com/'
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),

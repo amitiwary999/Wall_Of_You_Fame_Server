@@ -4,3 +4,8 @@ expinf-firebase-adminsdk-h6sf3-7b2659facf.json
 node_modules
 .env.production
 .env.development
+modechange-d4996-firebase-adminsdk-j90rs-e17e0c1a24.json
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml

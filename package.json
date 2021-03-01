@@ -39,7 +39,7 @@
         "e2e-test": "repo-tools test deploy"
     },
     "engines": {
-        "node": ">=8"
+        "node": "10.18.0"
     },
     "private": true
 }

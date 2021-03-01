@@ -6,7 +6,7 @@ const {schema} = require('./valSchema')
 
 let router = Router();
 router.use('', validateFirebaseIdToken(true))
-router.get('', validateSchema(schema.getUser), require('./method/get'));
+router.get('', require('./method/get'));
 router.use('', validateFirebaseIdToken())
 router.post('', require('./method/post'));
 router.patch('', require('./method/patch'));
