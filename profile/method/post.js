@@ -1,4 +1,4 @@
-const verifyInput = require('../../util/verifyInput');
+const {verifyInput} = require('../../util/verifyInput');
 const {addProfile} = require('../functions/addUserProfile')
 
 module.exports = async(req, res) => {
@@ -9,7 +9,8 @@ module.exports = async(req, res) => {
         verifyInput(req.body.email)
         verifyInput(req.body.profileId)
     }catch(error){
-        return res.status(400).send({message: error});
+        console.error("error in profile post input "+error)
+        return res.status(400).send(error);
     }
     await addProfile(req.body, userId)
     .then(result => {

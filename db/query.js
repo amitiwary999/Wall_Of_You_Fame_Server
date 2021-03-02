@@ -8,9 +8,10 @@ let sqlConfig = {
     password: process.env.RDS_SQL_PASSWORD,
     host: process.env.RDS_SQL_HOST,
     port: process.env.RDS_SQL_PORT,
-    connectionLimit: process.env.CONNECTION_LIMIT,
-    connectTimeout: process.env.CONNECT_TIMEOUT, //  10 seconds
-    acquireTimeout: process.env.ACQUIRE_TIMEOUT, //  10 seconds
+    database: process.env.RDS_SQL_DATABASE,
+    connectionLimit: parseInt(process.env.CONNECTION_LIMIT),
+    connectTimeout: parseInt(process.env.CONNECT_TIMEOUT), //  10 seconds
+    acquireTimeout: parseInt(process.env.ACQUIRE_TIMEOUT), //  10 seconds
     waitForConnections: true, //  Default: true
     queueLimit: 0,
     charset: "utf8mb4_unicode_ci", //  for special characters and emoji, else error
