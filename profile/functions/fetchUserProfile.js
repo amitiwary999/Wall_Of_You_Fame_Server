@@ -11,12 +11,12 @@ const fetchProfile = async(input, userId) => {
     let res = await runQuery(sql)
     if(res){
         let profile = res[0];
-        if(userId && profile.userId && profile.userId == userId){
+        if(userId && profile.userId && profile.userId === userId){
             profile.selfProfile = 1;
         }
         return profile
     }else{
-        throw "Oops! something went wrong. May be profile doesn't exist"
+        throw new Error("Oops! something went wrong. May be profile doesn't exist")
     }
 }
 

@@ -3,13 +3,10 @@ const {validateFirebaseIdToken} = require('../util/validateFirebaseToken')
 const {validateSchema} = require('../util/schemaValidator')
 const {schema} = require('./valSchema')
 
-
 let router = Router();
-router.use('', validateFirebaseIdToken(true))
-router.get('', require('./method/get'));
-router.use('', validateFirebaseIdToken())
-router.post('', require('./method/post'));
-router.patch('', require('./method/patch'));
+router.get('',[validateFirebaseIdToken(true), validateSchema(schema.getUser, 'query')], require('./method/get'));
+router.post('',[validateFirebaseIdToken(), validateSchema(schema.postUser)], require('./method/post'));
+router.patch('', [validateFirebaseIdToken(), validateSchema(schema.patchUser)], require('./method/patch'));
 
 
 module.exports = router;
