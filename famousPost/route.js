@@ -1,12 +1,12 @@
 const {Router} = require('express');
 const {validateFirebaseIdToken} = require('../util/validateFirebaseToken')
+const {validateSchema} = require('../util/schemaValidator')
+const {schema} = require('./valSchema')
 
 let router = Router();
-router.use('', validateFirebaseIdToken(true)) //this add the authentication header required restriction on api call. So put it above the methods after which you want the authentication restriction
-router.get('', require('./method/get'));
-
-router.use('', validateFirebaseIdToken())
-router.post('', require('./method/post'));
+// authorization is optional to fetch profile. Public data can be fetched if authorization token is not present
+router.get('', [validateFirebaseIdToken(true), validateSchema(schema.getUser, 'query')], require('./method/get'));
+router.post('',[validateFirebaseIdToken(), validateSchema(schema.postUser)], require('./method/post'));
 
 
 module.exports = router;
