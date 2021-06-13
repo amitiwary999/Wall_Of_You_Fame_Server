@@ -1,14 +1,25 @@
 const {runQuery} = require('../../db/query')
 const {generateHashId} = require('../../util/getHashId')
 
-const sendVideoCallRequest = async(input) =>{
-    let requestorId = input.requestorId;
+const sendVideoCallRequest = async(input, userId) =>{
     let inviteeId = input.inviteeId
     let status = input.status
-    let date = input.date;
+    let date = input.callTime;
+    let requestorId = userId; 
+    if(status === 1){
+        requestorId = input.inviteeId;
+        inviteeId = userId; 
+    }else{
+        try{
+            await alreadyRequested(requestorId, inviteeId)
+        }catch(error){
+            console.error(error);
+            throw error
+        }
+    }
     let id =  requestorId+inviteeId
     let hashId = generateHashId(id);
-    let roomNameId = requestorId+""+Date.now()+""+inviteeId;
+    let roomNameId = String(String(requestorId)+Date.now())+inviteeId;
     let roomNameHash = generateHashId(roomNameId);
 
     let sql = "INSERT INTO wallfame_video_requests_table(id, requestorId, inviteeId, roomName, status, updatedAt) VALUES ('"+hashId+"', '"+ requestorId + "', '" + inviteeId + "','"+roomNameHash+"', '"+ status +"', '" + date + "') ON DUPLICATE KEY UPDATE status = '"+status+"', updatedAt = '"+date+"';"

@@ -11,8 +11,9 @@ const schema =  {
         profileId: Joi.string().required() 
     }),
     patchUser: Joi.object({
-        name: Joi.string().optional(),
-        dp: Joi.string().optional()
+        userName: Joi.string().required(),
+        userDp: Joi.string().required(),
+        userBio: Joi.string().required()
     })
 }
 
