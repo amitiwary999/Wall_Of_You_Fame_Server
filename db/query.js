@@ -1,7 +1,5 @@
-/* eslint-disable promise/no-nesting */
 require('dotenv').config()
-const { config } = require('firebase-functions');
-const mysql = require('promise-mysql');
+const mysql = require('mysql');
 
 let sqlConfig = {
     user: process.env.RDS_SQL_USER,
@@ -20,65 +18,77 @@ let sqlConfig = {
 
 const pool = mysql.createPool(sqlConfig);
 
-async function runQuery(sqlQuery) {
-    return pool.then(p => {
-            return p.getConnection();
-        })
-        .then(connection => {
-            return connection.beginTransaction()
-                .then(() => {
-                    return connection.query(sqlQuery)
-                        .then(results => {
-                            return connection.commit()
-                                .then(() => {
-                                    connection.release();
-                                    return results;
-                                })
-                                .catch(_error => {
-                                    connection.release();
-                                    return results;
-                                })
-                        })
-                        .catch(error => {
-                            console.error("not able to run query", error);
-                            console.error("query not able to run query is ", sqlQuery);
-                            // eslint-disable-next-line promise/no-nesting
-                            connection.rollback()
-                                .then(() => {
-                                    connection.release();
-                                    return null;
-                                })
-                                .catch(error => {
-                                    console.error("not able to rollback", error);
-                                    connection.release();
-                                    return null;
-                                })
-                                throw "not able to run query"
-                        })
-                })
-                .catch(error => {
-                    console.error("not able to begin transaction", error);
-                    console.error("query not able to begin transaction is ", sqlQuery);
-                    connection.rollback()
-                        .then(() => {
-                            connection.release();
-                            return null;
-                        })
-                        .catch(error => {
-                            console.error("not able to rollback", error);
-                            connection.release();
-                            return null;
-                        })
-                    throw "not able to begin transaction"    
-                })
-        })
-        .catch(error => {
-            console.error("not able to get connection", error);
-            console.error("query not able to get connection is ", sqlQuery);
-            return null
-        })
+const executeQuery = (sql, values, callback) => {
+    pool.getConnection((err, connection) => {
+      if (err) {
+        return callback(err);
+      }
+      if (connection) {
+        connection.query(sql, values, (error, results) => {
+          connection.release();
+          if (error) {
+            return callback(error);
+          }
+          return callback(null, results);
+        });
+      }
+    });
+}
+
+const saveFamousPostDb = (data, callback) => {
+    const query = 'INSERT INTO wallfame_post_table SET ?'
+    executeQuery(query, data, (error, data) => {
+        if(error){
+            return callback(error);
+        }
+        return callback(null, data);
+    })
+}
+
+const getFamousPostDb = (userId, callback) => {
+    const query = "SELECT wallfame_post_table.*, (CASE WHEN isl.postId IS NULL THEN 0 ELSE 1 END) as isLiked, (CASE WHEN bookmark.postId IS NULL THEN 0 ELSE 1 END) as isBookmarked, userName, userDp, profileId FROM wallfame_post_table INNER JOIN (SELECT userId, userName, userDp, profileId FROM wallfame_user_table)u ON u.userId = wallfame_post_table.creatorId LEFT JOIN (Select postId, userId FROM wallfame_post_like_table WHERE userId = ?)isl ON  isl.postId = wallfame_post_table.postId LEFT JOIN (Select postId, userId FROM wallfame_bookmark_table WHERE userId = ?)bookmark ON  bookmark.postId = wallfame_post_table.postId ORDER BY wallfame_post_table.postId DESC"
+    executeQuery(query, [userId, userId], (error, data) => {
+        if(error){
+            return callback(error);
+        }
+        return callback(null, data);
+    })
+}
+
+const saveUserDb = (data, callback) => {
+  const query = "INSERT IGNORE INTO wallfame_user_table SET ?"
+  executeQuery(query, data, (error, data) => {
+    if(error){
+      return callback(error);
+    }
+    return callback(null, data);
+  })
+}
+
+const getUserProfileDb = (query, id, callback) => {
+  executeQuery(query, id, (error, data) => {
+    if(error){
+      return callback(error);
+    }
+    return callback(null, data);
+  })
+}
+
+const updateProfileDb = (name, dp, about, userId, callback) => {
+  const query = "UPDATE wallfame_user_table SET userName = ?, userDp = ?, userBio = ? WHERE userId = ?"
+  executeQuery(query, [name, dp, about, userId], (error, data) => {
+    if(error){
+      return callback(error);
+    }
+    return callback(null, data);
+  }) 
 }
 
 module.exports = {
-    runQuery
+    executeQuery,
+    saveFamousPostDb,
+    getFamousPostDb,
+    saveUserDb,
+    getUserProfileDb,
+    updateProfileDb
 }
