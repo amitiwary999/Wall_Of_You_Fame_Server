@@ -84,11 +84,89 @@ const updateProfileDb = (name, dp, about, userId, callback) => {
   }) 
 }
 
+const addPostLike = (data, callback) => {
+  const query = "INSERT INTO wallfame_post_like_table SET ? "
+  executeQuery(query, data, (error, data) => {
+    if(error){
+      return callback(error);
+    }else{
+      return callback(null, data)
+    }
+  })
+}
+
+const deletePostLike = (postId, userId, callback) => {
+  const query = "DELETE FROM wallfame_post_like_table WHERE postId = ? AND userId = ?"
+  executeQuery(query, [postId, userId], (error, data) => {
+    if(error){
+      return callback(error);
+    }
+    return callback(null, data);
+  })
+}
+
+const getReceivedCallRequestDb = (inviteeId, callback) => {
+  const query = "SELECT * FROM wallfame_video_requests_table INNER JOIN (SELECT userId, userName, userDp FROM wallfame_user_table)u ON u.userId = wallfame_video_requests_table.requestorId WHERE inviteeId = ? AND status != 2"
+  executeQuery(query, [inviteeId], (error, data) => {
+    if(error){
+      return callback(error);
+    }
+    return callback(null, data)
+  })
+}
+
+const deleteRequestDb = (id, callback) => {
+  const query = "DELETE FROM wallfame_video_requests_table WHERE id = ?"
+  executeQuery(query, [id], (error, data) => {
+    if(error){
+      return callback(error)
+    }
+    return callback(null, data)
+  })
+}
+
+const getVideoCallRequestDb = (id, callback) => {
+  const query = "SELECT * FROM wallfame_video_requests_table INNER JOIN (SELECT userId, userName, userDp FROM wallfame_user_table)u ON u.userId = wallfame_video_requests_table.inviteeId WHERE requestorId = ?"
+  executeQuery(query, [id], (error, data) => {
+    if(error){
+      return callback(error)
+    }
+    return callback(null, data)
+  })
+}
+
+const saveVideoCallRequestDb = (data, status, updatedAt, callback) => {
+  const query = "INSERT INTO wallfame_video_requests_table SET ? ON DUPLICATE KEY UPDATE status = ?, updatedAt = ?;"
+  executeQuery(query, [data, status, updatedAt], (error, result) => {
+    if(error){
+      return callback(error);
+    }
+    return callback(null, result)
+  })
+}
+
+const getAlreadyRequestedOrNot = (id, callback) => {
+  const query = "SELECT * FROM wallfame_video_requests_table WHERE status = 0 AND id=? OR status=1 AND updatedAt > CURRENT_TIMESTAMP"
+  executeQuery(query, id, (error, result) => {
+    if(error){
+      return callback(error);
+    }
+    return callback(null, result)
+  })
+}
+
 module.exports = {
     executeQuery,
     saveFamousPostDb,
     getFamousPostDb,
     saveUserDb,
     getUserProfileDb,
-    updateProfileDb
+    updateProfileDb, 
+    addPostLike,
+    deletePostLike,
+    getReceivedCallRequestDb,
+    deleteRequestDb,
+    getVideoCallRequestDb,
+    saveVideoCallRequestDb,
+    getAlreadyRequestedOrNot
 }
