@@ -1,13 +1,15 @@
-const {runQuery} = require('../../db/query')
+const {deleteRequestDb} = require('../../db/query')
 
 const deleteRequest = async(id) => {
-    let sql = "DELETE FROM wallfame_video_requests_table WHERE id = '"+id+"'";
-    let result = await runQuery(sql);
-    if(result? result.affectedRows : false){
-        return "deleted successfully"
-    }else{
-        throw "something went wrong"
-    }
+    return new Promise((resolve, reject) => {
+        deleteRequestDb(id, (error, data) => {
+            if(error){
+                reject(error);
+            }else{
+                resolve(data)
+            }
+        })
+    })
 }
 
 module.exports = {

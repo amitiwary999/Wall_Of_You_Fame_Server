@@ -1,4 +1,5 @@
-const {runQuery} = require('../../db/query')
+const { user } = require('firebase-functions/lib/providers/auth')
+const {saveFamousPostDb} = require('../../db/query')
 
 const saveFamousPost = async(userId, input) => {
     var description = input.desc
@@ -6,15 +7,16 @@ const saveFamousPost = async(userId, input) => {
     var mediaThumbUrl = input.mediaThumbUrl
     var postId = input.postId
     var mimeType = input.mimeType
-
-    //let sql = "INSERT INTO wallfame_blog_table (postId, desc, date, imageUrl, creatorId) VALUES (\"" + postId + "\",\"" + date + "\",\"" + imageUrl + "\",\"" + creatorId + "\",\"" + desc + "\");";
-    let s = "INSERT INTO wallfame_post_table (postId, description, mediaUrl, mediaThumbUrl, mimeType, creatorId) VALUES (\"" + postId + "\", \"" + description + "\", \"" + mediaUrl + "\", \"" + mediaThumbUrl + "\", \"" + mimeType + "\", \"" + userId + "\");";
-    let result = await runQuery(s);
-    if(result ? result.affectedRows : false){
-        return "saved the famous post successfully"
-    }else{
-        throw "Oops! something went wrong. Try after sometime"
-    }
+    const data = {postId, description, mediaUrl, mediaThumbUrl, mimeType, creatorId: userId}
+    return new Promise((resolve, reject) => {
+        saveFamousPostDb(data, (error, result) => {
+            if(error){
+                reject(error)
+            }else{
+                resolve("saved your famous post successfully")
+            }
+        })
+    })
 }
 
 module.exports = {

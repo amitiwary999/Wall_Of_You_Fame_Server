@@ -6,7 +6,7 @@ module.exports = async(req, res) => {
         return res.status(200).send({message: msg})
     }).catch(error => {
         console.error(error)
-        res.status(500).send({message: error})
+        res.status(500).send({message: error.message})
     })
     
 }

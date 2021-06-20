@@ -1,9 +1,16 @@
-const { runQuery } = require("../../db/query");
+const { saveUserDb } = require("../../db/query");
 
 const addProfile = async(input, userId) => {
-    let sql = "INSERT IGNORE INTO wallfame_user_table (userId, profileId, userName, userDp, userEmail) VALUES ('" + userId + "', '" + input.profileId + "',  '" + input.name + "', '" + input.dp + "', '" + input.email + "');";
-    let result = await runQuery(sql);
-    return result
+    const data = {userId, profileId: input.profileId, userName: input.name, userDp: input.dp, userEmail: input.email}
+    return new Promise((resolve, reject) => {
+        saveUserDb(data, (error, result) => {
+            if(error){
+                reject(error);
+            }else{
+                resolve(result);
+            }
+        })
+    })
 }
 
 module.exports = {

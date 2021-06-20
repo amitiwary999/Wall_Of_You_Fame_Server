@@ -5,6 +5,6 @@ module.exports = async(req, res) => {
     .then(videoRequests => {
         return res.status(200).send(videoRequests)
     }).catch(error => {
-        res.status(500).send({message: error})
+        res.status(500).send({message: error.message})
     })
 }

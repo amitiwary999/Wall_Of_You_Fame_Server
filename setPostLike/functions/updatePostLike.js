@@ -1,22 +1,26 @@
-const { runQuery } = require("../../db/query");
+const { addPostLike, deletePostLike } = require("../../db/query");
 
 const updatePostLike = async(postId, userId, increment) => {
-    let sql
-    if (increment === 1) {
-        sql = "INSERT INTO wallfame_post_like_table (postId, userId) VALUES (\"" + postId + "\", \"" + userId + "\");"
-    } else {
-        sql = "DELETE FROM wallfame_post_like_table WHERE postId = \"" + postId + "\" AND userId = \"" + userId + "\";"
-    }
-    try{
-        let result = await runQuery(pool, sql);
-        if(result !== null && result !== undefined){
-            return 1;
+    return new Promise((resolve, reject) => {
+        if(increment === 1){
+            let data = {postId, userId};
+            addPostLike(data, (error, data) => {
+                if(error){
+                    reject(error)
+                }else{
+                    resolve(data)
+                }
+            })
         }else{
-            throw new Error("can't like the post")
+            deletePostLike(postId, userId, (error, data) => {
+                if(error){
+                    reject(error)
+                }else{
+                    resolve(data)
+                }
+            })
         }
-    }catch(error){
-        throw error;
-    }
+    })
 }
 
 module.exports = {

@@ -1,4 +1,4 @@
-const {runQuery} = require('../../db/query')
+const {runQuery, saveVideoCallRequestDb, getAlreadyRequestedOrNot} = require('../../db/query')
 const {generateHashId} = require('../../util/getHashId')
 
 const sendVideoCallRequest = async(input, userId) =>{
@@ -22,26 +22,34 @@ const sendVideoCallRequest = async(input, userId) =>{
     let roomNameId = String(String(requestorId)+Date.now())+inviteeId;
     let roomNameHash = generateHashId(roomNameId);
 
-    let sql = "INSERT INTO wallfame_video_requests_table(id, requestorId, inviteeId, roomName, status, updatedAt) VALUES ('"+hashId+"', '"+ requestorId + "', '" + inviteeId + "','"+roomNameHash+"', '"+ status +"', '" + date + "') ON DUPLICATE KEY UPDATE status = '"+status+"', updatedAt = '"+date+"';"
-    let result = await runQuery(sql);
-    if(result? result.affectedRows : false){
-        return 'successfully updated the call request'
-    }else{
-        throw "can't make video request"
-    }
-
+    const data = {requestorId: requestorId, inviteeId: inviteeId, id: hashId, roomName: roomNameHash, status: status, updatedAt: date}
+    return new Promise((resolve, reject) => {
+        saveVideoCallRequestDb(data, status, date, (error, data) => {
+            if(error){
+                reject(error)
+            }else{
+                resolve(data)
+            }
+        })
+    })
 }
 
 const alreadyRequested = async(requestorId, inviteeId) => {
     let id =  requestorId+inviteeId
     let hashId = generateHashId(id);
-    let alreadyRequestedQuery =  "SELECT * FROM wallfame_video_requests_table WHERE status = 0 AND id='"+hashId+"' OR status=1 AND updatedAt > CURRENT_TIMESTAMP";
-    let result =  await runQuery(alreadyRequestedQuery);
-    if(result.length>0){
-        throw 'You can make new request if your previous request rejected or completed'
-    }else{
-        return 1;
-    }
+    return new Promise((resolve, reject) => {
+        getAlreadyRequestedOrNot(hashId, (error, data) => {
+            if(error){
+                reject(error)
+            }else{
+                if(data.length>0){
+                    reject(new Error('You can make new request if your previous request rejected or completed'))
+                }else{
+                    resolve(1);
+                }
+            }
+        })
+    })
 }
 
 module.exports = {
